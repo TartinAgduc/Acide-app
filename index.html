@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Poches Acides</h2>
+
+<div id="app"></div>
+
+<button onclick="resetAll()">RESET</button>
+
+<script>
+const data = [
+  {
+    service: "HD1",
+    chariots: [
+      { nom: "Chariot 1", acides: ["871"] },
+      { nom: "Chariot 2", acides: ["874"] },
+      { nom: "Chariot 3", acides: ["468","470"] },
+      { nom: "Chariot 4", acides: ["463","460"] }
+    ]
+  },
+  {
+    service: "HD2/F",
+    chariots: [
+      { nom: "Chariot 1", acides: ["463","882"] },
+      { nom: "Chariot 2", acides: ["468","871"] },
+      { nom: "Chariot 3", acides: ["470","463"] },
+      { nom: "Chariot 4", acides: ["460","874"] }
+    ]
+  },
+  {
+    service: "HD3/6",
+    chariots: [
+      { nom: "Chariot 1", acides: ["468","461","462"] },
+      { nom: "Chariot 2", acides: ["463","874","871"] },
+      { nom: "Chariot 3", acides: ["460"] },
+      { nom: "Chariot 4", acides: ["463","460"] },
+      { nom: "Chariot 5", acides: ["470","468","444"] }
+    ]
+  },
+  {
+    service: "HD4/5",
+    chariots: [
+      { nom: "Chariot 1", acides: ["463","468"] },
+      { nom: "Chariot 2", acides: ["461","462","871","874","470"] },
+      { nom: "Chariot 3", acides: ["460"] }
+    ]
+  }
+];
+
+let storage = JSON.parse(localStorage.getItem("acides") || "{}");
+
+function save(){ localStorage.setItem("acides", JSON.stringify(storage)); }
+
+function add(id){ storage[id]=(storage[id]||0)+1; update(); }
+function remove(id){ storage[id]=Math.max(0,(storage[id]||0)-1); update(); }
+
+function update(){
+document.querySelectorAll("[data-id]").forEach(el=>{
+el.innerText = storage[el.dataset.id] || 0;
+});
+save();
+}
+
+function create(){
+let app = document.getElementById("app");
+
+data.forEach(service=>{
+let title = document.createElement("h2");
+title.innerText = service.service;
+app.appendChild(title);
+
+service.chariots.forEach((chariot, i)=>{
+let sub = document.createElement("h3");
+sub.innerText = chariot.nom;
+app.appendChild(sub);
+
+chariot.acides.forEach(code=>{
+let id = service.service + "_" + chariot.nom + "_" + code;
+
+let div = document.createElement("div");
+
+let label = document.createElement("span");
+label.innerText = code;
+label.onclick=()=>add(id);
+
+let minus = document.createElement("button");
+minus.innerText="-";
+minus.onclick=()=>remove(id);
+
+let count = document.createElement("span");
+count.dataset.id=id;
+count.innerText=storage[id]||0;
+
+let plus = document.createElement("button");
+plus.innerText="+";
+plus.onclick=()=>add(id);
+
+div.appendChild(label);
+div.appendChild(minus);
+div.appendChild(count);
+div.appendChild(plus);
+
+app.appendChild(div);
+});
+});
+});
+}
+
+function resetAll(){
+if(confirm("Reset ?")){
+storage={};
+save();
+location.reload();
+}
+}
+
+create();
+</script>
+
+</body>
+</html>
