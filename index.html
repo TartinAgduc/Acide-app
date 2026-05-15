@@ -1,12 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Poches Acides</title>
+
+<style>
+body {
+  font-family: Arial;
+  background:#f2f2f2;
+  padding:10px;
+}
+
+h1 {
+  text-align:center;
+}
+
+.service {
+  background:white;
+  padding:12px;
+  margin:15px 0;
+  border-radius:15px;
+  box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.chariot {
+  margin-top:10px;
+  padding:8px;
+  background:#fafafa;
+  border-radius:10px;
+}
+
+.row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px;
+  margin:5px 0;
+  background:white;
+  border-radius:10px;
+}
+
+.label {
+  font-size:18px;
+  flex:1;
+}
+
+.count {
+  font-size:18px;
+  width:30px;
+  text-align:center;
+}
+
+button {
+  font-size:20px;
+  padding:6px 12px;
+  margin:0 3px;
+}
+
+.reset {
+  background:red;
+  color:white;
+  width:100%;
+  padding:15px;
+  font-size:18px;
+  border:none;
+  border-radius:12px;
+  margin-top:20px;
+}
+</style>
+</head>
+
 <body>
 
-<h2>Poches Acides</h2>
-
+<h1>Poches Acides</h1>
 <div id="app"></div>
-
-<button onclick="resetAll()">RESET</button>
+<button class="reset" onclick="resetAll()">RESET</button>
 
 <script>
 const data = [
@@ -51,69 +119,91 @@ const data = [
 
 let storage = JSON.parse(localStorage.getItem("acides") || "{}");
 
-function save(){ localStorage.setItem("acides", JSON.stringify(storage)); }
+function save(){
+  localStorage.setItem("acides", JSON.stringify(storage));
+}
 
-function add(id){ storage[id]=(storage[id]||0)+1; update(); }
-function remove(id){ storage[id]=Math.max(0,(storage[id]||0)-1); update(); }
+function add(id){
+  storage[id]=(storage[id]||0)+1;
+  update();
+}
+
+function remove(id){
+  storage[id]=Math.max(0,(storage[id]||0)-1);
+  update();
+}
 
 function update(){
-document.querySelectorAll("[data-id]").forEach(el=>{
-el.innerText = storage[el.dataset.id] || 0;
-});
-save();
+  document.querySelectorAll("[data-id]").forEach(el=>{
+    el.innerText = storage[el.dataset.id] || 0;
+  });
+  save();
 }
 
 function create(){
-let app = document.getElementById("app");
+  let app = document.getElementById("app");
 
-data.forEach(service=>{
-let title = document.createElement("h2");
-title.innerText = service.service;
-app.appendChild(title);
+  data.forEach(service=>{
+    let section = document.createElement("div");
+    section.className = "service";
 
-service.chariots.forEach((chariot, i)=>{
-let sub = document.createElement("h3");
-sub.innerText = chariot.nom;
-app.appendChild(sub);
+    let title = document.createElement("h2");
+    title.innerText = service.service;
+    section.appendChild(title);
 
-chariot.acides.forEach(code=>{
-let id = service.service + "_" + chariot.nom + "_" + code;
+    service.chariots.forEach(chariot=>{
+      let bloc = document.createElement("div");
+      bloc.className = "chariot";
 
-let div = document.createElement("div");
+      let sub = document.createElement("h3");
+      sub.innerText = chariot.nom;
+      bloc.appendChild(sub);
 
-let label = document.createElement("span");
-label.innerText = code;
-label.onclick=()=>add(id);
+      chariot.acides.forEach(code=>{
+        let id = service.service + "_" + chariot.nom + "_" + code;
 
-let minus = document.createElement("button");
-minus.innerText="-";
-minus.onclick=()=>remove(id);
+        let row = document.createElement("div");
+        row.className = "row";
 
-let count = document.createElement("span");
-count.dataset.id=id;
-count.innerText=storage[id]||0;
+        let label = document.createElement("div");
+        label.className = "label";
+        label.innerText = code;
+        label.onclick=()=>add(id);
 
-let plus = document.createElement("button");
-plus.innerText="+";
-plus.onclick=()=>add(id);
+        let minus = document.createElement("button");
+        minus.innerText="-";
+        minus.onclick=()=>remove(id);
 
-div.appendChild(label);
-div.appendChild(minus);
-div.appendChild(count);
-div.appendChild(plus);
+        let count = document.createElement("span");
+        count.className = "count";
+        count.dataset.id=id;
+        count.innerText=storage[id]||0;
 
-app.appendChild(div);
-});
-});
-});
+        let plus = document.createElement("button");
+        plus.innerText="+";
+        plus.onclick=()=>add(id);
+
+        row.appendChild(label);
+        row.appendChild(minus);
+        row.appendChild(count);
+        row.appendChild(plus);
+
+        bloc.appendChild(row);
+      });
+
+      section.appendChild(bloc);
+    });
+
+    app.appendChild(section);
+  });
 }
 
 function resetAll(){
-if(confirm("Reset ?")){
-storage={};
-save();
-location.reload();
-}
+  if(confirm("Tout remettre à zéro ?")){
+    storage={};
+    save();
+    location.reload();
+  }
 }
 
 create();
