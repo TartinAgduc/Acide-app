@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Poches Acides</title>
 
 <style>
@@ -9,10 +11,27 @@ body {
   font-family: Arial;
   background: #f2f2f2;
   padding: 10px;
+  font-size: 20px;
 }
 
 h1 {
   text-align: center;
+  font-size: 28px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tabs button {
+  font-size: 18px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: none;
+  background: white;
 }
 
 .service {
@@ -34,10 +53,10 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  margin: 6px 0;
+  padding: 18px;
+  margin: 10px 0;
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
 }
 
@@ -46,18 +65,19 @@ h1 {
 }
 
 .label {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .count {
-  font-size: 18px;
-  min-width: 25px;
+  font-size: 22px;
+  min-width: 35px;
   text-align: center;
 }
 
 button {
-  font-size: 18px;
-  padding: 5px 10px;
+  font-size: 20px;
+  padding: 10px 14px;
+  border-radius: 10px;
 }
 
 .reset {
@@ -70,15 +90,39 @@ button {
   border-radius: 12px;
   margin-top: 20px;
 }
+
+#stats div {
+  padding: 12px;
+  margin: 8px;
+  background: white;
+  border-radius: 10px;
+}
 </style>
 </head>
 
 <body>
 
 <h1>Poches Acides</h1>
-<div id="app"></div>
 
-<button class="reset" onclick="resetAll()">RESET</button>
+<div class="tabs">
+  <button onclick="showTab('appTab')">App</button>
+  <button onclick="showTab('statsTab')">Stats</button>
+</div>
+
+<!-- APP -->
+<div id="appTab">
+  <div id="app"></div>
+
+  <button class="reset" onclick="resetAll()">RESET APP</button>
+</div>
+
+<!-- STATS -->
+<div id="statsTab" style="display:none;">
+  <h2 style="text-align:center;">Statistiques</h2>
+  <div id="stats"></div>
+
+  <button class="reset" onclick="resetStatsOnly()">RESET STATS</button>
+</div>
 
 <script>
 const data = [
@@ -121,7 +165,11 @@ const data = [
   }
 ];
 
+// 📦 stockage principal
 let storage = JSON.parse(localStorage.getItem("acides") || "{}");
+
+// 📦 stockage stats reset (optionnel futur)
+let statsStorage = JSON.parse(localStorage.getItem("statsReset") || "{}");
 
 function save() {
   localStorage.setItem("acides", JSON.stringify(storage));
@@ -141,9 +189,14 @@ function update() {
   document.querySelectorAll("[data-id]").forEach(el => {
     el.innerText = storage[el.dataset.id] || 0;
   });
+
   save();
+  updateStats();
 }
 
+/* =========================
+   CREATION UI
+========================= */
 function create() {
   let app = document.getElementById("app");
 
@@ -164,12 +217,12 @@ function create() {
       bloc.appendChild(sub);
 
       chariot.acides.forEach(code => {
-        let id = service.service + "_" + chariot.nom + "_" + code;
+
+        let id = `${service.service}_${chariot.nom.replace(/\s+/g,'_')}_${code.replace(/\s+/g,'_')}`;
 
         let row = document.createElement("div");
         row.className = "row";
 
-        // 👉 clic sur toute la ligne = +1
         row.onclick = () => add(id);
 
         let left = document.createElement("div");
@@ -186,15 +239,15 @@ function create() {
         count.dataset.id = id;
         count.innerText = storage[id] || 0;
 
-        left.appendChild(label);
-        left.appendChild(count);
-
         let minus = document.createElement("button");
         minus.innerText = "-";
         minus.onclick = (e) => {
           e.stopPropagation();
           remove(id);
         };
+
+        left.appendChild(label);
+        left.appendChild(count);
 
         row.appendChild(left);
         row.appendChild(minus);
@@ -209,15 +262,71 @@ function create() {
   });
 }
 
+/* =========================
+   STATS
+========================= */
+function updateStats() {
+  let totals = {};
+
+  for (let key in storage) {
+    let parts = key.split("_");
+    let code = parts[parts.length - 1];
+
+    totals[code] = (totals[code] || 0) + storage[key];
+  }
+
+  let statsDiv = document.getElementById("stats");
+  statsDiv.innerHTML = "";
+
+  Object.entries(totals)
+    .sort((a,b) => b[1] - a[1])
+    .forEach(([code, total]) => {
+      let div = document.createElement("div");
+      div.innerText = `${code} : ${total}`;
+      statsDiv.appendChild(div);
+    });
+}
+
+/* =========================
+   TABS
+========================= */
+function showTab(tab) {
+  document.getElementById("appTab").style.display = "none";
+  document.getElementById("statsTab").style.display = "none";
+  document.getElementById(tab).style.display = "block";
+  updateStats();
+}
+
+/* =========================
+   RESET APP
+========================= */
 function resetAll() {
-  if (confirm("Tout remettre à zéro ?")) {
+  if (confirm("RESET complet de l'application ?")) {
     storage = {};
     save();
     location.reload();
   }
 }
 
+/* =========================
+   RESET STATS UNIQUEMENT
+========================= */
+function resetStatsOnly() {
+  if (confirm("RESET des statistiques uniquement ?")) {
+
+    // on garde storage intact
+    statsStorage = {};
+    localStorage.setItem("statsReset", JSON.stringify(statsStorage));
+
+    updateStats();
+  }
+}
+
+/* =========================
+   INIT
+========================= */
 create();
+updateStats();
 </script>
 
 </body>
