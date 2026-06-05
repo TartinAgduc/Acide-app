@@ -275,11 +275,14 @@ function create(){
    STATS GLOBAL
 ========================= */
 function updateStats(){
+
   let totals={};
 
   for(let k in globalStats){
     let code=k.split("_").pop();
-    totals[code]=(totals[code]||0)+globalStats[k];
+    let val = Number(globalStats[k]) || 0;
+
+    totals[code]=(totals[code]||0)+val;
   }
 
   let div=document.getElementById("stats");
@@ -288,10 +291,24 @@ function updateStats(){
   Object.entries(totals)
   .sort((a,b)=>b[1]-a[1])
   .forEach(([code,val])=>{
-    let wrap=document.createElement("div");
-    wrap.innerHTML=`<b>${code}</b> : ${val}
-    <div class="bar" style="width:${val*10}px"></div>`;
-    div.appendChild(wrap);
+
+    // 🔥 sécurité iPhone (évite NaN + bloc vide)
+    val = Number(val) || 0;
+
+    let boxes = Math.floor(val / 34);
+    let pallets = Math.floor(boxes / 4);
+
+    let d=document.createElement("div");
+    d.className="statBox";
+
+    d.innerHTML = `
+      <b>${code}</b><br>
+      ${val} poches<br>
+      📦 ${boxes} box(es)<br>
+      🧱 ${pallets} palette(s)
+    `;
+
+    div.appendChild(d);
   });
 }
 
