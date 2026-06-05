@@ -229,24 +229,32 @@ function create(){
         row.className="row";
         row.onclick=()=>add(id);
 
+        // LEFT BLOCK
         let left=document.createElement("div");
         left.style.display="flex";
-        left.style.gap="10px";
         left.style.alignItems="center";
+        left.style.gap="12px";
 
+        // LABEL (acide)
         let label=document.createElement("div");
         label.className="label";
         label.innerText=code;
 
+        // COUNT (badge visuel séparé)
         let count=document.createElement("span");
         count.className="count";
         count.dataset.id=id;
         count.innerText=daily[id]||0;
 
+        // bouton -
         let minus=document.createElement("button");
         minus.innerText="-";
-        minus.onclick=(e)=>{e.stopPropagation();remove(id);};
+        minus.onclick=(e)=>{
+          e.stopPropagation();
+          remove(id);
+        };
 
+        // AJOUT PROPRE (ordre logique + espace visible)
         left.appendChild(label);
         left.appendChild(count);
 
