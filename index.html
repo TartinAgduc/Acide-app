@@ -60,10 +60,6 @@ h1 {
   cursor: pointer;
 }
 
-.row:active {
-  background: #dfefff;
-}
-
 .label {
   font-size: 20px;
 }
@@ -97,6 +93,13 @@ button {
   background: white;
   border-radius: 10px;
 }
+
+/* barres stats */
+.bar {
+  height: 18px;
+  background: #4a90e2;
+  border-radius: 6px;
+}
 </style>
 </head>
 
@@ -113,138 +116,136 @@ button {
 <div id="appTab">
   <div id="app"></div>
 
-  <button class="reset" onclick="resetAll()">RESET APP</button>
+  <button class="reset" onclick="resetDay()">RESET JOURNÉE</button>
 </div>
 
 <!-- STATS -->
 <div id="statsTab" style="display:none;">
-  <h2 style="text-align:center;">Statistiques</h2>
+  <h2 style="text-align:center;">Statistiques globales</h2>
+
   <div id="stats"></div>
 
-  <button class="reset" onclick="resetStatsOnly()">RESET STATS</button>
+  <h2 style="text-align:center;">Top du jour</h2>
+  <div id="topDay"></div>
+
+  <button class="reset" onclick="resetStats()">RESET STATS GLOBAL</button>
 </div>
 
 <script>
+
+/* =========================
+   DATA
+========================= */
 const data = [
-  {
-    service: "HD1",
-    chariots: [
-      { nom: "Chariot 1", acides: ["871","874"] },
-      { nom: "Chariot 2", acides: ["468","470"] },
-      { nom: "Chariot 3", acides: ["463","460"] }
-    ]
-  },
-  {
-    service: "HD2/F",
-    chariots: [
-      { nom: "Chariot 1", acides: ["463"] },
-      { nom: "Chariot 2", acides: ["882","468"] },
-      { nom: "Chariot 3", acides: ["871","470"] },
-      { nom: "Chariot 4", acides: ["463"] },
-      { nom: "Chariot 5", acides: ["460"] },
-      { nom: "Chariot 6", acides: ["874"] }
-    ]
-  },
-  {
-    service: "HD3/6",
-    chariots: [
-      { nom: "Chariot 1", acides: ["468","461","462"] },
-      { nom: "Chariot 2", acides: ["463","874","871"] },
-      { nom: "Chariot 3", acides: ["460"] },
-      { nom: "Chariot 4", acides: ["463 3.8L","460 3.8L"] },
-      { nom: "Etagère", acides: ["470","468 3.8L","444"] }
-    ]
-  },
-  {
-    service: "HD4/5",
-    chariots: [
-      { nom: "Chariot 1", acides: ["463","468"] },
-      { nom: "Chariot 2", acides: ["461","462","871","874","470"] },
-      { nom: "Chariot 3", acides: ["460"] }
-    ]
-  }
+  { service:"HD1", chariots:[
+    { nom:"Chariot 1", acides:["871","874"] },
+    { nom:"Chariot 2", acides:["468","470"] },
+    { nom:"Chariot 3", acides:["463","460"] }
+  ]},
+  { service:"HD2/F", chariots:[
+    { nom:"Chariot 1", acides:["463"] },
+    { nom:"Chariot 2", acides:["882","468"] },
+    { nom:"Chariot 3", acides:["871","470"] },
+    { nom:"Chariot 4", acides:["463"] },
+    { nom:"Chariot 5", acides:["460"] },
+    { nom:"Chariot 6", acides:["874"] }
+  ]},
+  { service:"HD3/6", chariots:[
+    { nom:"Chariot 1", acides:["468","461","462"] },
+    { nom:"Chariot 2", acides:["463","874","871"] },
+    { nom:"Chariot 3", acides:["460"] }
+  ]},
+  { service:"HD4/5", chariots:[
+    { nom:"Chariot 1", acides:["463","468"] },
+    { nom:"Chariot 2", acides:["461","462","871","874","470"] },
+    { nom:"Chariot 3", acides:["460"] }
+  ]}
 ];
 
-// 📦 stockage principal
-let storage = JSON.parse(localStorage.getItem("acides") || "{}");
+/* =========================
+   STORAGE
+========================= */
+let daily = JSON.parse(localStorage.getItem("daily") || "{}");
+let globalStats = JSON.parse(localStorage.getItem("globalStats") || "{}");
 
-// 📦 stockage stats reset (optionnel futur)
-let statsStorage = JSON.parse(localStorage.getItem("statsReset") || "{}");
-
-function save() {
-  localStorage.setItem("acides", JSON.stringify(storage));
+function save(){
+  localStorage.setItem("daily", JSON.stringify(daily));
+  localStorage.setItem("globalStats", JSON.stringify(globalStats));
 }
 
-function add(id) {
-  storage[id] = (storage[id] || 0) + 1;
+/* =========================
+   ACTIONS
+========================= */
+function add(id){
+  daily[id] = (daily[id] || 0) + 1;
+  globalStats[id] = (globalStats[id] || 0) + 1;
   update();
 }
 
-function remove(id) {
-  storage[id] = Math.max(0, (storage[id] || 0) - 1);
+function remove(id){
+  daily[id] = Math.max(0, (daily[id] || 0) - 1);
   update();
 }
 
-function update() {
-  document.querySelectorAll("[data-id]").forEach(el => {
-    el.innerText = storage[el.dataset.id] || 0;
+/* =========================
+   UPDATE UI
+========================= */
+function update(){
+  document.querySelectorAll("[data-id]").forEach(el=>{
+    el.innerText = daily[el.dataset.id] || 0;
   });
 
   save();
   updateStats();
+  updateTopDay();
 }
 
 /* =========================
-   CREATION UI
+   UI BUILD
 ========================= */
-function create() {
+function create(){
   let app = document.getElementById("app");
 
-  data.forEach(service => {
-    let section = document.createElement("div");
-    section.className = "service";
+  data.forEach(service=>{
+    let section=document.createElement("div");
+    section.className="service";
 
-    let title = document.createElement("h2");
-    title.innerText = service.service;
+    let title=document.createElement("h2");
+    title.innerText=service.service;
     section.appendChild(title);
 
-    service.chariots.forEach(chariot => {
-      let bloc = document.createElement("div");
-      bloc.className = "chariot";
+    service.chariots.forEach(ch=>{
+      let bloc=document.createElement("div");
+      bloc.className="chariot";
 
-      let sub = document.createElement("h3");
-      sub.innerText = chariot.nom;
+      let sub=document.createElement("h3");
+      sub.innerText=ch.nom;
       bloc.appendChild(sub);
 
-      chariot.acides.forEach(code => {
+      ch.acides.forEach(code=>{
+        let id=`${service.service}_${ch.nom}_${code}`.replace(/\s+/g,"_");
 
-        let id = `${service.service}_${chariot.nom.replace(/\s+/g,'_')}_${code.replace(/\s+/g,'_')}`;
+        let row=document.createElement("div");
+        row.className="row";
+        row.onclick=()=>add(id);
 
-        let row = document.createElement("div");
-        row.className = "row";
+        let left=document.createElement("div");
+        left.style.display="flex";
+        left.style.gap="10px";
+        left.style.alignItems="center";
 
-        row.onclick = () => add(id);
+        let label=document.createElement("div");
+        label.className="label";
+        label.innerText=code;
 
-        let left = document.createElement("div");
-        left.style.display = "flex";
-        left.style.alignItems = "center";
-        left.style.gap = "10px";
+        let count=document.createElement("span");
+        count.className="count";
+        count.dataset.id=id;
+        count.innerText=daily[id]||0;
 
-        let label = document.createElement("div");
-        label.className = "label";
-        label.innerText = code;
-
-        let count = document.createElement("span");
-        count.className = "count";
-        count.dataset.id = id;
-        count.innerText = storage[id] || 0;
-
-        let minus = document.createElement("button");
-        minus.innerText = "-";
-        minus.onclick = (e) => {
-          e.stopPropagation();
-          remove(id);
-        };
+        let minus=document.createElement("button");
+        minus.innerText="-";
+        minus.onclick=(e)=>{e.stopPropagation();remove(id);};
 
         left.appendChild(label);
         left.appendChild(count);
@@ -263,61 +264,80 @@ function create() {
 }
 
 /* =========================
-   STATS
+   STATS GLOBAL
 ========================= */
-function updateStats() {
-  let totals = {};
+function updateStats(){
+  let totals={};
 
-  for (let key in storage) {
-    let parts = key.split("_");
-    let code = parts[parts.length - 1];
-
-    totals[code] = (totals[code] || 0) + storage[key];
+  for(let k in globalStats){
+    let code=k.split("_").pop();
+    totals[code]=(totals[code]||0)+globalStats[k];
   }
 
-  let statsDiv = document.getElementById("stats");
-  statsDiv.innerHTML = "";
+  let div=document.getElementById("stats");
+  div.innerHTML="";
 
   Object.entries(totals)
-    .sort((a,b) => b[1] - a[1])
-    .forEach(([code, total]) => {
-      let div = document.createElement("div");
-      div.innerText = `${code} : ${total}`;
-      statsDiv.appendChild(div);
-    });
+  .sort((a,b)=>b[1]-a[1])
+  .forEach(([code,val])=>{
+    let wrap=document.createElement("div");
+    wrap.innerHTML=`<b>${code}</b> : ${val}
+    <div class="bar" style="width:${val*10}px"></div>`;
+    div.appendChild(wrap);
+  });
+}
+
+/* =========================
+   TOP DU JOUR
+========================= */
+function updateTopDay(){
+  let totals={};
+
+  for(let k in daily){
+    let code=k.split("_").pop();
+    totals[code]=(totals[code]||0)+daily[k];
+  }
+
+  let div=document.getElementById("topDay");
+  div.innerHTML="";
+
+  Object.entries(totals)
+  .sort((a,b)=>b[1]-a[1])
+  .slice(0,3)
+  .forEach(([code,val])=>{
+    let d=document.createElement("div");
+    d.innerHTML=`🔥 ${code} : ${val}`;
+    div.appendChild(d);
+  });
 }
 
 /* =========================
    TABS
 ========================= */
-function showTab(tab) {
-  document.getElementById("appTab").style.display = "none";
-  document.getElementById("statsTab").style.display = "none";
-  document.getElementById(tab).style.display = "block";
-  updateStats();
+function showTab(tab){
+  document.getElementById("appTab").style.display="none";
+  document.getElementById("statsTab").style.display="none";
+  document.getElementById(tab).style.display="block";
 }
 
 /* =========================
-   RESET APP
+   RESET JOUR
 ========================= */
-function resetAll() {
-  if (confirm("RESET complet de l'application ?")) {
-    storage = {};
+function resetDay(){
+  if(confirm("RESET de la journée ?")){
+    daily={};
     save();
     location.reload();
   }
 }
 
 /* =========================
-   RESET STATS UNIQUEMENT
+   RESET STATS
 ========================= */
-function resetStatsOnly() {
-  if (confirm("RESET des statistiques uniquement ?")) {
-
-    // on garde storage intact
-    statsStorage = {};
-    localStorage.setItem("statsReset", JSON.stringify(statsStorage));
-
+function resetStats(){
+  if(confirm("RESET des stats globales ?")){
+    globalStats={};
+    save();
     updateStats();
   }
 }
@@ -326,7 +346,7 @@ function resetStatsOnly() {
    INIT
 ========================= */
 create();
-updateStats();
+update();
 </script>
 
 </body>
