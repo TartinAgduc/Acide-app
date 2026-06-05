@@ -276,6 +276,45 @@ function create(){
 /* =========================
    STATS GLOBAL
 ========================= */
+function getStockInfo(code, val){
+
+  val = Number(val) || 0;
+
+  // 🟥 CAS 470 (cartons)
+  if(code.includes("470")){
+    let cartons = Math.floor(val / 2);
+    let palettes = Math.floor(cartons / 50);
+
+    return {
+      unit: "cartons",
+      cartons,
+      palettes
+    };
+  }
+
+  // 🟨 CAS 3.8L (box 40)
+  if(code.includes("3.8L")){
+    let boxes = Math.floor(val / 40);
+    let pallets = Math.floor(boxes / 4);
+
+    return {
+      unit: "boxes",
+      boxes,
+      pallets
+    };
+  }
+
+  // 🟦 STANDARD (34)
+  let boxes = Math.floor(val / 34);
+  let pallets = Math.floor(boxes / 4);
+
+  return {
+    unit: "boxes",
+    boxes,
+    pallets
+  };
+}
+
 function updateStats(){
 
   let totals={};
@@ -294,21 +333,27 @@ function updateStats(){
   .sort((a,b)=>b[1]-a[1])
   .forEach(([code,val])=>{
 
-    // 🔥 sécurité iPhone (évite NaN + bloc vide)
-    val = Number(val) || 0;
-
-    let boxes = Math.floor(val / 34);
-    let pallets = Math.floor(boxes / 4);
+    let stock = getStockInfo(code,val);
 
     let d=document.createElement("div");
     d.className="statBox";
 
-    d.innerHTML = `
+    let text = `
       <b>${code}</b><br>
       ${val} poches<br>
-      📦 ${boxes} box(es)<br>
-      🧱 ${pallets} palette(s)
     `;
+
+    if(stock.cartons !== undefined){
+      text += `📦 ${stock.cartons} cartons<br>`;
+      text += `🧱 ${stock.palettes} palettes<br>`;
+    }
+
+    if(stock.boxes !== undefined){
+      text += `📦 ${stock.boxes} box(es)<br>`;
+      text += `🧱 ${stock.pallets} palettes<br>`;
+    }
+
+    d.innerHTML = text;
 
     div.appendChild(d);
   });
