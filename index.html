@@ -360,6 +360,17 @@ button{
   color:var(--danger);
   border:1px solid #fecaca;
 }
+
+.acid-toolbar{background:var(--card);padding:12px;margin:12px 0;border-radius:15px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.acid-toolbar select,.acid-toolbar input{width:100%;padding:11px;font-size:17px;border:1px solid var(--border);border-radius:10px;margin-top:6px}
+.acid-manager-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.acid-manager-grid .full{grid-column:1/-1}
+.chariot-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chariot-header h3{margin:8px 0}
+.icon-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:7px 9px;font-size:14px}
+.acid-row-actions{display:flex;gap:6px;align-items:center}
+.acid-select-label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+
 @media(max-width:520px){.reference-form{grid-template-columns:1fr}}
 
 #toast{
@@ -376,6 +387,17 @@ button{
   max-width:90%;
   text-align:center;
 }
+
+
+.acid-toolbar{background:var(--card);padding:12px;margin:12px 0;border-radius:15px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.acid-toolbar select,.acid-toolbar input{width:100%;padding:11px;font-size:17px;border:1px solid var(--border);border-radius:10px;margin-top:6px}
+.acid-manager-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.acid-manager-grid .full{grid-column:1/-1}
+.chariot-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chariot-header h3{margin:8px 0}
+.icon-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:7px 9px;font-size:14px}
+.acid-row-actions{display:flex;gap:6px;align-items:center}
+.acid-select-label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
 
 @media(max-width:520px){
   body{font-size:17px}
@@ -397,6 +419,38 @@ button{
 
 <!-- APP -->
 <div id="appTab" class="page active">
+  <div class="acid-toolbar">
+    <label class="acid-select-label" for="serviceSelect">Service</label>
+    <select id="serviceSelect" onchange="selectAcidService(this.value)"></select>
+
+    <button class="primary" style="width:100%;margin-top:10px" onclick="toggleAcidManager()">
+      ⚙ Gérer les services, chariots et acides
+    </button>
+
+    <div id="acidManager" class="settings">
+      <h3>Ajouter un service</h3>
+      <div class="acid-manager-grid">
+        <input id="newServiceName" class="full" placeholder="Nom du service, ex. HD7">
+        <button class="success full" onclick="addAcidService()">Ajouter le service</button>
+      </div>
+
+      <h3>Service sélectionné</h3>
+      <div class="acid-manager-grid">
+        <input id="newChariotName" class="full" placeholder="Nom du nouveau chariot">
+        <button class="success full" onclick="addAcidChariot()">Ajouter un chariot</button>
+        <button class="icon-danger full" onclick="deleteSelectedAcidService()">🗑 Supprimer ce service</button>
+      </div>
+
+      <div class="hint" style="margin-top:10px">
+        Pour ajouter un acide, utilise le bouton « Ajouter un acide » sous le chariot concerné.
+        Toutes les modifications sont sauvegardées sur cet appareil.
+      </div>
+      <button class="secondary" style="width:100%;margin-top:10px" onclick="restoreDefaultAcidStructure()">
+        Restaurer la structure d’origine
+      </button>
+    </div>
+  </div>
+
   <div id="app"></div>
   <button class="reset" onclick="resetDay()">RESET JOURNÉE</button>
 </div>
@@ -482,7 +536,7 @@ button{
 /* =========================================================
    DONNÉES DE L'APPLICATION "POCHES ACIDES"
 ========================================================= */
-const acidData = [
+const baseAcidData = [
   { service:"HD1", chariots:[
     { nom:"Chariot 1", acides:["882","871","874"] },
     { nom:"Chariot 2", acides:["468","470"] },
@@ -508,7 +562,14 @@ const acidData = [
     { nom:"Chariot 2", acides:["461","462","871","874","470","882"] },
     { nom:"Chariot 3", acides:["460"] }
   ]}
-];
+ ];
+
+function cloneDefaultAcidData(){
+  return JSON.parse(JSON.stringify(baseAcidData));
+}
+
+let acidData = JSON.parse(localStorage.getItem("acidStructure") || "null") || cloneDefaultAcidData();
+let selectedAcidService = localStorage.getItem("selectedAcidService") || (acidData[0]?.service || "");
 
 /* =========================================================
    PRODUITS DE LA FEUILLE DE COMMANDE
@@ -760,6 +821,8 @@ function save(){
   localStorage.setItem("collapsedCategories", JSON.stringify(collapsedCategories));
   localStorage.setItem("customProducts", JSON.stringify(customProducts));
   localStorage.setItem("deletedProductCodes", JSON.stringify(deletedProductCodes));
+  localStorage.setItem("acidStructure", JSON.stringify(acidData));
+  localStorage.setItem("selectedAcidService", selectedAcidService);
 }
 
 /* =========================================================
@@ -785,66 +848,223 @@ function updateAcids(){
   updateTopDay();
 }
 
+function acidCounterId(serviceName,chariotName,code){
+  return `${serviceName}_${chariotName}_${code}`.replace(/\s+/g,"_");
+}
+
+function refreshServiceSelect(){
+  const select=document.getElementById("serviceSelect");
+  if(!select) return;
+
+  if(!acidData.length){
+    select.innerHTML='<option value="">Aucun service</option>';
+    selectedAcidService="";
+    return;
+  }
+
+  if(!acidData.some(s=>s.service===selectedAcidService)){
+    selectedAcidService=acidData[0].service;
+  }
+
+  select.innerHTML=acidData.map(service=>
+    `<option value="${escapeHtml(service.service)}" ${service.service===selectedAcidService?"selected":""}>${escapeHtml(service.service)}</option>`
+  ).join("");
+}
+
 function createAcidApp(){
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+  refreshServiceSelect();
+  const app=document.getElementById("app");
+  app.innerHTML="";
 
-  acidData.forEach(service=>{
-    const section=document.createElement("div");
-    section.className="service";
+  const service=acidData.find(item=>item.service===selectedAcidService);
+  if(!service){
+    app.innerHTML='<div class="summary-empty">Aucun service. Utilise le bouton de gestion pour en ajouter un.</div>';
+    return;
+  }
 
-    const title=document.createElement("h2");
-    title.innerText=service.service;
-    section.appendChild(title);
+  const section=document.createElement("div");
+  section.className="service";
 
-    service.chariots.forEach(ch=>{
-      const bloc=document.createElement("div");
-      bloc.className="chariot";
+  const title=document.createElement("h2");
+  title.innerText=service.service;
+  section.appendChild(title);
 
-      const sub=document.createElement("h3");
-      sub.innerText=ch.nom;
-      bloc.appendChild(sub);
+  if(service.chariots.length===0){
+    const empty=document.createElement("div");
+    empty.className="summary-empty";
+    empty.textContent="Aucun chariot dans ce service.";
+    section.appendChild(empty);
+  }
 
-      ch.acides.forEach(code=>{
-        const id=`${service.service}_${ch.nom}_${code}`.replace(/\s+/g,"_");
+  service.chariots.forEach((ch,chariotIndex)=>{
+    const bloc=document.createElement("div");
+    bloc.className="chariot";
 
-        const row=document.createElement("div");
-        row.className="row";
-        row.onclick=()=>add(id);
+    const header=document.createElement("div");
+    header.className="chariot-header";
 
-        const left=document.createElement("div");
-        left.style.display="flex";
-        left.style.alignItems="center";
-        left.style.gap="12px";
+    const sub=document.createElement("h3");
+    sub.innerText=ch.nom;
+    header.appendChild(sub);
 
-        const label=document.createElement("div");
-        label.className="label";
-        label.innerText=code;
+    const deleteChariot=document.createElement("button");
+    deleteChariot.className="icon-danger";
+    deleteChariot.innerText="🗑 Chariot";
+    deleteChariot.onclick=()=>deleteAcidChariot(chariotIndex);
+    header.appendChild(deleteChariot);
+    bloc.appendChild(header);
 
-        const count=document.createElement("span");
-        count.className="count";
-        count.dataset.acidId=id;
-        count.innerText=daily[id]||0;
+    ch.acides.forEach((code,acidIndex)=>{
+      const id=acidCounterId(service.service,ch.nom,code);
+      const row=document.createElement("div");
+      row.className="row";
+      row.onclick=()=>add(id);
 
-        const minus=document.createElement("button");
-        minus.innerText="−";
-        minus.onclick=(e)=>{
-          e.stopPropagation();
-          remove(id);
-        };
+      const left=document.createElement("div");
+      left.style.display="flex";
+      left.style.alignItems="center";
+      left.style.gap="12px";
 
-        left.appendChild(label);
-        left.appendChild(count);
-        row.appendChild(left);
-        row.appendChild(minus);
-        bloc.appendChild(row);
-      });
+      const label=document.createElement("div");
+      label.className="label";
+      label.innerText=code;
 
-      section.appendChild(bloc);
+      const count=document.createElement("span");
+      count.className="count";
+      count.dataset.acidId=id;
+      count.innerText=daily[id]||0;
+
+      const actions=document.createElement("div");
+      actions.className="acid-row-actions";
+
+      const minus=document.createElement("button");
+      minus.innerText="−";
+      minus.onclick=(e)=>{e.stopPropagation();remove(id);};
+
+      const deleteAcid=document.createElement("button");
+      deleteAcid.className="icon-danger";
+      deleteAcid.innerText="🗑";
+      deleteAcid.onclick=(e)=>{e.stopPropagation();deleteAcidType(chariotIndex,acidIndex);};
+
+      left.appendChild(label);
+      left.appendChild(count);
+      actions.appendChild(minus);
+      actions.appendChild(deleteAcid);
+      row.appendChild(left);
+      row.appendChild(actions);
+      bloc.appendChild(row);
     });
 
-    app.appendChild(section);
+    const addAcidButton=document.createElement("button");
+    addAcidButton.className="secondary";
+    addAcidButton.style.width="100%";
+    addAcidButton.style.marginTop="8px";
+    addAcidButton.innerText="➕ Ajouter un acide";
+    addAcidButton.onclick=()=>addAcidType(chariotIndex);
+    bloc.appendChild(addAcidButton);
+
+    section.appendChild(bloc);
   });
+
+  app.appendChild(section);
+}
+
+function selectAcidService(serviceName){
+  selectedAcidService=serviceName;
+  save();
+  createAcidApp();
+}
+
+function toggleAcidManager(){
+  document.getElementById("acidManager").classList.toggle("open");
+}
+
+function addAcidService(){
+  const input=document.getElementById("newServiceName");
+  const name=input.value.trim();
+  if(!name){showToast("Entre le nom du service.");return;}
+  if(acidData.some(s=>s.service.toLowerCase()===name.toLowerCase())){
+    showToast("Ce service existe déjà.");return;
+  }
+  acidData.push({service:name,chariots:[]});
+  selectedAcidService=name;
+  input.value="";
+  save();
+  createAcidApp();
+  showToast("Service ajouté.");
+}
+
+function deleteSelectedAcidService(){
+  const service=acidData.find(s=>s.service===selectedAcidService);
+  if(!service) return;
+  if(!confirm(`Supprimer le service ${service.service} et tous ses chariots ?`)) return;
+  acidData=acidData.filter(s=>s.service!==selectedAcidService);
+  selectedAcidService=acidData[0]?.service||"";
+  save();
+  createAcidApp();
+}
+
+function addAcidChariot(){
+  const service=acidData.find(s=>s.service===selectedAcidService);
+  const input=document.getElementById("newChariotName");
+  if(!service){showToast("Ajoute d’abord un service.");return;}
+  const name=input.value.trim();
+  if(!name){showToast("Entre le nom du chariot.");return;}
+  if(service.chariots.some(c=>c.nom.toLowerCase()===name.toLowerCase())){
+    showToast("Ce chariot existe déjà.");return;
+  }
+  service.chariots.push({nom:name,acides:[]});
+  input.value="";
+  save();
+  createAcidApp();
+  showToast("Chariot ajouté.");
+}
+
+function deleteAcidChariot(chariotIndex){
+  const service=acidData.find(s=>s.service===selectedAcidService);
+  const chariot=service?.chariots[chariotIndex];
+  if(!chariot) return;
+  if(!confirm(`Supprimer ${chariot.nom} et tous ses acides ?`)) return;
+  service.chariots.splice(chariotIndex,1);
+  save();
+  createAcidApp();
+}
+
+function addAcidType(chariotIndex){
+  const service=acidData.find(s=>s.service===selectedAcidService);
+  const chariot=service?.chariots[chariotIndex];
+  if(!chariot) return;
+  const code=prompt(`Code ou nom de l’acide à ajouter dans ${chariot.nom} :`);
+  if(code===null) return;
+  const clean=code.trim();
+  if(!clean){showToast("Le code est vide.");return;}
+  if(chariot.acides.some(a=>a.toLowerCase()===clean.toLowerCase())){
+    showToast("Cet acide est déjà dans le chariot.");return;
+  }
+  chariot.acides.push(clean);
+  save();
+  createAcidApp();
+  showToast("Acide ajouté.");
+}
+
+function deleteAcidType(chariotIndex,acidIndex){
+  const service=acidData.find(s=>s.service===selectedAcidService);
+  const chariot=service?.chariots[chariotIndex];
+  const code=chariot?.acides[acidIndex];
+  if(!chariot || code===undefined) return;
+  if(!confirm(`Supprimer l’acide ${code} de ${chariot.nom} ?`)) return;
+  chariot.acides.splice(acidIndex,1);
+  save();
+  createAcidApp();
+}
+
+function restoreDefaultAcidStructure(){
+  if(!confirm("Restaurer les services, chariots et acides d’origine ?")) return;
+  acidData=cloneDefaultAcidData();
+  selectedAcidService=acidData[0]?.service||"";
+  save();
+  createAcidApp();
+  showToast("Structure d’origine restaurée.");
 }
 
 function getStockInfo(code, val){
@@ -1573,6 +1793,7 @@ function showTab(tabId, button){
   button.classList.add("active");
 
   if(tabId==="commandesTab") renderOrders();
+  if(tabId==="appTab") createAcidApp();
 }
 
 function resetDay(){
