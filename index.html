@@ -3,102 +3,354 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Poches Acides</title>
+<title>Poches Acides & Commandes</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #f2f2f2;
-  padding: 10px;
-  font-size: 20px;
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --soft:#fafafa;
+  --primary:#2563eb;
+  --primary-soft:#dbeafe;
+  --danger:#dc2626;
+  --success:#15803d;
+  --warning:#b45309;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#d1d5db;
 }
 
-h1 {
-  text-align: center;
-  font-size: 28px;
+*{box-sizing:border-box}
+
+body{
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  margin:0;
+  padding:10px;
+  font-size:18px;
 }
 
-.tabs {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
+h1{
+  text-align:center;
+  font-size:28px;
+  margin:12px 0;
 }
 
-.tabs button {
-  font-size: 18px;
-  padding: 10px 15px;
-  border-radius: 10px;
-  border: none;
-  background: white;
+h2,h3{margin-top:12px}
+
+.tabs{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:12px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  padding:8px 0;
+  background:var(--bg);
 }
 
-.service {
-  background: white;
-  padding: 12px;
-  margin: 15px 0;
-  border-radius: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.tabs button{
+  flex:1;
+  max-width:180px;
+  font-size:17px;
+  padding:11px 8px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:white;
+  cursor:pointer;
 }
 
-.chariot {
-  margin-top: 10px;
-  padding: 8px;
-  background: #fafafa;
-  border-radius: 10px;
+.tabs button.active{
+  background:var(--primary);
+  color:white;
+  border-color:var(--primary);
 }
 
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px;
-  margin: 10px 0;
-  background: white;
-  border-radius: 14px;
-  cursor: pointer;
+.page{display:none}
+.page.active{display:block}
+
+.service,
+.category,
+.order-summary,
+.settings-panel{
+  background:var(--card);
+  padding:12px;
+  margin:14px 0;
+  border-radius:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
 
-.label {
-  font-size: 20px;
+.chariot{
+  margin-top:10px;
+  padding:8px;
+  background:var(--soft);
+  border-radius:10px;
 }
 
-.count {
-  font-size: 22px;
-  min-width: 35px;
-  text-align: center;
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px;
+  margin:9px 0;
+  background:white;
+  border-radius:14px;
+  cursor:pointer;
+  border:1px solid #eee;
 }
 
-button {
-  font-size: 20px;
-  padding: 10px 14px;
-  border-radius: 10px;
+.label{font-size:20px}
+.count{
+  font-size:22px;
+  min-width:35px;
+  text-align:center;
+  font-weight:bold;
 }
 
-.reset {
-  background: red;
-  color: white;
-  width: 100%;
-  padding: 15px;
-  font-size: 18px;
-  border: none;
-  border-radius: 12px;
-  margin-top: 20px;
+button{
+  font-size:18px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  cursor:pointer;
 }
 
-#stats div {
-  padding: 12px;
-  margin: 8px;
-  background: white;
-  border-radius: 10px;
+.reset{
+  background:var(--danger);
+  color:white;
+  width:100%;
+  padding:15px;
+  font-size:18px;
+  border:none;
+  border-radius:12px;
+  margin-top:20px;
 }
 
-/* barres stats */
-.bar {
-  height: 18px;
-  background: #4a90e2;
-  border-radius: 6px;
+.primary{
+  background:var(--primary);
+  color:white;
+  border:none;
+}
+
+.secondary{
+  background:white;
+  color:var(--text);
+}
+
+.success{
+  background:var(--success);
+  color:white;
+  border:none;
+}
+
+#stats div,
+#topDay div{
+  padding:12px;
+  margin:8px 0;
+  background:white;
+  border-radius:10px;
+}
+
+.search{
+  width:100%;
+  padding:14px;
+  font-size:18px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:12px;
+}
+
+.command-toolbar{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.category-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  padding:4px 2px;
+}
+
+.category-header h2{
+  margin:4px 0;
+  font-size:21px;
+}
+
+.category-content.hidden{display:none}
+
+.product{
+  border-top:1px solid #e5e7eb;
+  padding:14px 0;
+}
+
+.product:first-child{border-top:none}
+
+.product-title{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.product-code{
+  font-weight:bold;
+  color:var(--primary);
+}
+
+.product-name{
+  font-size:16px;
+  color:var(--muted);
+  margin-top:3px;
+  line-height:1.35;
+}
+
+.favorite{
+  background:transparent;
+  border:none;
+  padding:2px 6px;
+  font-size:25px;
+}
+
+.inputs-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+}
+
+.input-box{
+  background:var(--soft);
+  border-radius:10px;
+  padding:9px;
+}
+
+.input-box label{
+  display:block;
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+
+.input-box input{
+  width:100%;
+  font-size:19px;
+  padding:9px;
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+
+.total-line{
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:var(--primary-soft);
+  font-weight:bold;
+}
+
+.total-line.positive{
+  background:#dcfce7;
+  color:#14532d;
+}
+
+.product-actions{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+
+.product-actions button{
+  font-size:14px;
+  padding:7px 9px;
+}
+
+.settings{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:#fff7ed;
+}
+
+.settings.open{display:block}
+
+.settings-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+
+.settings label{
+  display:block;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.settings input{
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:16px;
+}
+
+.hint{
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+.summary-item{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 0;
+  border-bottom:1px solid #e5e7eb;
+}
+
+.summary-item:last-child{border-bottom:none}
+
+.summary-empty{
+  color:var(--muted);
+  text-align:center;
+  padding:15px;
+}
+
+.badge{
+  display:inline-block;
+  font-size:12px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#e5e7eb;
+  color:#374151;
+  margin-top:5px;
+}
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:white;
+  padding:12px 18px;
+  border-radius:10px;
+  display:none;
+  z-index:100;
+  max-width:90%;
+  text-align:center;
+}
+
+@media(max-width:520px){
+  body{font-size:17px}
+  .inputs-grid,.settings-grid{grid-template-columns:1fr 1fr}
+  .command-toolbar{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -108,21 +360,20 @@ button {
 <h1>Poches Acides</h1>
 
 <div class="tabs">
-  <button onclick="showTab('appTab')">App</button>
-  <button onclick="showTab('statsTab')">Stats</button>
+  <button id="tabBtnApp" class="active" onclick="showTab('appTab', this)">App</button>
+  <button id="tabBtnStats" onclick="showTab('statsTab', this)">Stats</button>
+  <button id="tabBtnCommandes" onclick="showTab('commandesTab', this)">Commandes</button>
 </div>
 
 <!-- APP -->
-<div id="appTab">
+<div id="appTab" class="page active">
   <div id="app"></div>
-
   <button class="reset" onclick="resetDay()">RESET JOURNÉE</button>
 </div>
 
 <!-- STATS -->
-<div id="statsTab" style="display:none;">
+<div id="statsTab" class="page">
   <h2 style="text-align:center;">Statistiques globales</h2>
-
   <div id="stats"></div>
 
   <h2 style="text-align:center;">Top du jour</h2>
@@ -131,12 +382,53 @@ button {
   <button class="reset" onclick="resetStats()">RESET STATS GLOBAL</button>
 </div>
 
-<script>
+<!-- COMMANDES -->
+<div id="commandesTab" class="page">
+  <h2 style="text-align:center;">Commandes</h2>
 
-/* =========================
-   DATA
-========================= */
-const data = [
+  <input id="searchCommande" class="search" type="search"
+         placeholder="Rechercher un code ou un produit..."
+         oninput="renderOrders()">
+
+  <div class="command-toolbar">
+    <button class="secondary" onclick="toggleFavoritesOnly()">
+      <span id="favoritesFilterLabel">☆ Afficher les favoris</span>
+    </button>
+    <button class="secondary" onclick="expandOrCollapseAll()">
+      <span id="expandLabel">Tout replier</span>
+    </button>
+  </div>
+
+  <div class="settings-panel">
+    <b>Comment ça marche ?</b>
+    <div class="hint">
+      Entre le nombre de boîtes, cartons, palettes ou unités souhaité.
+      Le total en unités est calculé automatiquement.
+      Pour un produit dont le conditionnement est inconnu, appuie sur
+      <b>⚙ Conditionnement</b> puis renseigne les valeurs. Elles sont sauvegardées sur ce téléphone.
+    </div>
+  </div>
+
+  <div id="commandes"></div>
+
+  <div class="order-summary">
+    <h2>Commande finale</h2>
+    <div id="recapCommande"></div>
+    <div class="command-toolbar" style="margin-top:12px">
+      <button class="primary" onclick="copyCommande()">📋 Copier la commande</button>
+      <button class="success" onclick="downloadCommande()">⬇ Télécharger en texte</button>
+    </div>
+    <button class="reset" onclick="resetCommande()">RESET COMMANDE</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   DONNÉES DE L'APPLICATION "POCHES ACIDES"
+========================================================= */
+const acidData = [
   { service:"HD1", chariots:[
     { nom:"Chariot 1", acides:["882","871","874"] },
     { nom:"Chariot 2", acides:["468","470"] },
@@ -164,105 +456,269 @@ const data = [
   ]}
 ];
 
-/* =========================
-   STORAGE
-========================= */
+/* =========================================================
+   PRODUITS DE LA FEUILLE DE COMMANDE
+
+   Conditionnement :
+   box = unités par boîte
+   carton = unités par carton
+   pallet = unités par palette
+
+   Les valeurs à 0 sont à renseigner depuis l'application
+   avec le bouton "⚙ Conditionnement".
+========================================================= */
+const products = [
+  // HÉMODIALYSEURS
+  ["Hémodialyseurs","8267","FILTRYZER NF-1.6U",0,0,0],
+  ["Hémodialyseurs","8266","FILTRYZER NF-2.1U",0,0,0],
+  ["Hémodialyseurs","2169","POLYFLUX 17L",0,0,0],
+  ["Hémodialyseurs","2818","NIKKISO FDX 180 GW",0,0,0],
+  ["Hémodialyseurs","7851","BIOREMA 26H",0,0,0],
+  ["Hémodialyseurs","8176","CLEARUM HS 20",0,0,0],
+  ["Hémodialyseurs","1211","FRESENIUS HF FX 60",0,0,0],
+  ["Hémodialyseurs","1214","FRESENIUS HF FX 80",0,0,0],
+  ["Hémodialyseurs","1948","FRESENIUS HF FX 100",0,0,0],
+  ["Hémodialyseurs","5351","DIACAP pro 16H",0,0,0],
+  ["Hémodialyseurs","5263","DIACAP pro 19H",0,0,0],
+  ["Hémodialyseurs","5867","TORAY NV-21U HYDROLINK",0,0,0],
+
+  // LIGNES
+  ["Lignes","1500","LIFE LINE ONLINE PLUS BVM 5008 - LIGNE UP",14,0,0],
+  ["Lignes","3252","LIFE LINE ONLINE PLUS BVM 5008 - LIGNE BIP",20,0,0],
+  ["Lignes","5217","SET NIKKISO DBB-EXA - LIGNE HD",28,0,0],
+  ["Lignes","5218","SET NIKKISO DBB-EXA - LIGNE UP",22,0,0],
+  ["Lignes","5352","SET NIKKISO DBB-EXA HDF - LIGNE HDF",24,0,0],
+  ["Lignes","7486","FRESENIUS LIGNE 6008",0,0,0],
+  ["Lignes","1517","FRESENIUS TRANSDUCTER PROTECTOR pour 5008",100,0,0],
+  ["Lignes","2823","EFFE EMME PROLONGATEUR DE VEINE LI900R UP EXA",0,0,0],
+
+  // CONCENTRÉS
+  ["Concentrés","1716","Cartouche Sol-Cart B 760 g",0,0,0],
+  ["Concentrés","1499","CARTOUCHE BIBAG 650 g",0,0,48],
+  ["Concentrés","1502","CARTOUCHE BIBAG 900 g",0,0,48],
+  ["Concentrés","5161","CITRASATE 460 3,8L BB",40,0,160],
+  ["Concentrés","5542","CITRASATE 460 4,5L BB",34,0,136],
+  ["Concentrés","5541","CITRASATE 461 4,5L poche",0,2,0],
+  ["Concentrés","5640","CITRASATE 462 4,5L poche",0,2,0],
+  ["Concentrés","5544","CITRASATE 463 3,8L BB",40,0,160],
+  ["Concentrés","5543","CITRASATE 463 4,5L BB",34,0,136],
+  ["Concentrés","8156","CITRASATE 468 3,8L BB",40,0,160],
+  ["Concentrés","8649","CITRASATE 468 4,5L BB",34,0,136],
+  ["Concentrés","5036","CITRASATE 470 4,5L poche",0,2,100],
+  ["Concentrés","11880","Acétate MTN 874-A poches 4,5L",0,0,0],
+  ["Concentrés","11872","Acétate MTN 871-A poches 4,5L",0,0,0],
+  ["Concentrés","11876","Acétate MTN 882-A poches 4,5L",0,0,0],
+
+  // AIGUILLES ET CATHÉTERS
+  ["Aiguilles et cathéters","4409","AIGUILLES 1512 FISTULE A15G 25mm secu",50,0,0],
+  ["Aiguilles et cathéters","4410","AIGUILLES 1515 FISTULE V15G 25mm secu",50,0,0],
+  ["Aiguilles et cathéters","4573","AIGUILLES 1518 FISTULE V15G 1.8x20mm 50cm",40,0,0],
+  ["Aiguilles et cathéters","4574","AIGUILLES 1519 FISTULE A15G 1.8x20mm 50cm",40,0,0],
+  ["Aiguilles et cathéters","4413","AIGUILLES 1609 FISTULE A16G 1.6x20mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","4414","AIGUILLES 1610 FISTULE V16G 1.6x20mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","4407","AIGUILLES 1614 FISTULE A16G 1.6x25mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","4408","AIGUILLES 1616 FISTULE V16G 1.6x25mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","4576","AIGUILLES 1619 FISTULE A16G 1.6x20mm 50cm",40,0,0],
+  ["Aiguilles et cathéters","4575","AIGUILLES 1620 FISTULE V16G 1.6x20mm 50cm",40,0,0],
+  ["Aiguilles et cathéters","4343","AIGUILLES SINGLE NEEDLE 16G 20mm",50,0,0],
+  ["Aiguilles et cathéters","410","AIGUILLES FISTULE BIONIC 16G 25mm",50,0,0],
+  ["Aiguilles et cathéters","3454","AIGUILLES SINGLE NEEDLE 17G 20mm",50,0,0],
+  ["Aiguilles et cathéters","3800","AIGUILLES NIPRO 15G 25mm 30cm Veine",50,0,0],
+  ["Aiguilles et cathéters","3799","AIGUILLES NIPRO 15G 25mm 30cm Artère",50,0,0],
+  ["Aiguilles et cathéters","4411","AIGUILLES 1707 FISTULE A17G 1.5x20mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","4412","AIGUILLES 1708 FISTULE V17G 1.5x20mm 30cm",50,0,0],
+  ["Aiguilles et cathéters","5481","MEDIKIT SUPERCATH 14G 25mm",0,0,0],
+  ["Aiguilles et cathéters","5483","MEDIKIT SUPERCATH 15G 25mm",0,0,0],
+  ["Aiguilles et cathéters","5485","MEDIKIT SUPERCATH 16G 25mm",0,0,0],
+
+  // SOLUTIONS / RESTITUTION
+  ["Solutions / restitution","13924","FRESENIUS CHLORURE DE SODIUM 0,9% 0,5L",20,0,0],
+  ["Solutions / restitution","1980","AGUETTANT CHLORURE DE SODIUM PROAMP 0,9% 20ML",20,0,0],
+  ["Solutions / restitution","5331","BAXTER CHLORURE DE SODIUM 0,9% 2L",6,0,0],
+  ["Solutions / restitution","9720","BAXTER Flex NaCl 0,9% 100ml DAT",60,0,0],
+  ["Solutions / restitution","13930","FRESENIUS GLUCOSE 5% 0,5L",20,0,0],
+  ["Solutions / restitution","5280","FRESENIUS CHLORURE DE SODIUM 0,9% 1L",10,0,0],
+
+  // ANTISEPSIE
+  ["Antisepsie","8299","BACTISEPTIC 2% INCOLORE 250ml",0,0,0],
+  ["Antisepsie","957","BETADINE ROUGE SCRUB 4% 125ML",60,0,0],
+  ["Antisepsie","3600","GILBERTSCRUB 4% 125 ml",0,0,0],
+  ["Antisepsie","1577","BETADINE ORANGE ALCOOLIQUE 5% 125ML",0,0,0],
+  ["Antisepsie","452","BETADINE DERMIQUE 10% 125ML",0,0,0],
+  ["Antisepsie","2919","BETADINE DERMIQUE 10% 50 DOSETTES 10ml",50,0,0],
+
+  // SERINGUES ET ACCESSOIRES
+  ["Seringues et accessoires","394","SERINGUE CARESS 1 ml",0,0,0],
+  ["Seringues et accessoires","4310","SERINGUE BD 2ml",0,0,0],
+  ["Seringues et accessoires","4311","SERINGUE 10 ml",0,0,0],
+  ["Seringues et accessoires","2026","SERINGUE 20 ml",0,0,0],
+  ["Seringues et accessoires","2135","SERINGUE 50ml",0,0,0],
+  ["Seringues et accessoires","3389","VACUTAINER BLEU",0,0,0],
+  ["Seringues et accessoires","3710","VACUTAINER VERT",0,0,0],
+  ["Seringues et accessoires","3725","CORPS VACUTAINER ONE USE HOLDER - TULIPE",1000,0,0],
+  ["Seringues et accessoires","4584","BD ECLIPSE NEEDLE ORANGE",100,0,0],
+  ["Seringues et accessoires","4711","BD BLUNT FILL NEEDLE ROUGE",100,0,0],
+  ["Seringues et accessoires","2255","HEMODIA PROLONGATEUR POUSSE-SERINGUE GAMMA 0834_B",0,0,0],
+
+  // RACCORDS ET PERFUSEURS
+  ["Raccords et perfuseurs","3973","RACCORDS DE DIALYSE 3775_D",0,0,0],
+  ["Raccords et perfuseurs","3990","RACCORD Y POUR UNIPONCTURE GAMMA 0095_C",0,0,0],
+  ["Raccords et perfuseurs","3672","COMBI-STOPPER LUER LOCK - BOUCHON ROUGE",100,0,0],
+  ["Raccords et perfuseurs","2973","HEMODIA PERFUSEUR GAMMA 748_A",0,0,0],
+  ["Raccords et perfuseurs","3679","BD PERFUSEUR ALARIS PRODUCTS 273-004V",0,0,0],
+  ["Raccords et perfuseurs","3755","Perfuseur VL ST00 VOLUMAT",30,0,0],
+  ["Raccords et perfuseurs","3548","EUROMEDIS EUROTRANS S - TUBULURE À TRANSFUSION",0,0,0],
+  ["Raccords et perfuseurs","7759","CONNECTEUR RECIRCULATION 6008",0,0,0],
+
+  // COMPRESSES / BANDES / SOINS
+  ["Compresses / bandes / soins","8160","CONFORMING BANDES 4m x 5cm",20,0,0],
+  ["Compresses / bandes / soins","8166","CONFORMING BANDES 4m x 10cm",20,0,0],
+  ["Compresses / bandes / soins","3690","HEMODIA SET FISTULE SD173_C",0,0,0],
+  ["Compresses / bandes / soins","5712","HEMODIA SET KT DIALYSE SD235_L",0,0,0],
+  ["Compresses / bandes / soins","4797","CHAMPS DE SOINS EURODRAPE 40x45 STÉRILE",50,0,0],
+  ["Compresses / bandes / soins","7671","COMPRESSES NON TISSÉ STÉRILES 7,5x7,5 cm",0,0,0],
+
+  // INSTRUMENTS
+  ["Instruments","3747","PINCE KOCHER FORCEPS BLEU 13cm",0,0,0],
+  ["Instruments","3749","PINCE FORCEPS VERTE 13cm",0,0,0],
+  ["Instruments","3752","PORTE-AIGUILLES MÉTAL 14cm",0,0,0],
+  ["Instruments","8437","CISEAUX POINTUS STÉRILES 12cm",0,0,0],
+  ["Instruments","2317","HEMODIA PINCE À CLAMPER VIOLETTE",0,0,0],
+  ["Instruments","2766","HEMODIA GARROT VIOLET 4208_B",0,0,0],
+  ["Instruments","4932","GIMA PINCE DE PÉAN STÉRILE COURBE 14CM",0,0,0],
+
+  // ABORD CHIRURGICAL
+  ["Abord chirurgical","1019","DISPOSABLE SCALPELS - BISTOURI",11,0,0],
+
+  // PANSEMENTS
+  ["Pansements","2243","URGOSTERILE 5x7",0,0,0],
+  ["Pansements","3720","URGOSTERILE 20x10",0,0,0],
+  ["Pansements","3721","Pansements non tissés 20mm x 72mm",1000,0,0],
+  ["Pansements","2321","MOLNLYCKE MEFIX BANDE 10x15cm",0,0,0],
+  ["Pansements","147","MICROPORE ROULEAU 25mm x 9m",12,0,0],
+  ["Pansements","269","MICROPORE ROULEAU 12,5mm x 9m",24,0,0],
+  ["Pansements","1711","MICROPORE ROULEAU 75mm x 9m",4,0,0],
+
+  // PRODUITS NETTOYANTS ET RÉACTIFS
+  ["Produits nettoyants et réactifs","1068","ACIDE CITRIQUE 50% bidon 6 L B.BRAUN",0,0,0],
+  ["Produits nettoyants et réactifs","5404","CITROSTÉRIL 5 L",0,0,0],
+  ["Produits nettoyants et réactifs","2309","DIAQUANT PEROXIDE BLEU",0,0,0],
+  ["Produits nettoyants et réactifs","2906","DIAQUANT CHLORINE VERT",0,0,0],
+  ["Produits nettoyants et réactifs","5619","DIAQUANT WATER HARDNESS VIOLET",0,0,0],
+  ["Produits nettoyants et réactifs","5224","RÉACTIF CHLORE TOTAL DR300",0,0,0],
+  ["Produits nettoyants et réactifs","5223","RÉACTIF CHLORE LIBRE DR300",0,0,0],
+  ["Produits nettoyants et réactifs","9736","FÛT DASRI JAUNE + COUVERCLE 30L",0,0,0],
+  ["Produits nettoyants et réactifs","5864","NOVAPRO GLUCOSE TEST STRIPS BLEU",0,0,0],
+  ["Produits nettoyants et réactifs","5865","NOVAPRO GLUCOSE NIVEAU 1 VERT",0,0,0],
+  ["Produits nettoyants et réactifs","5866","NOVAPRO GLUCOSE NIVEAU 3 ROUGE",0,0,0],
+
+  // OXYGÉNOTHÉRAPIE / ASPIRATION
+  ["Oxygénothérapie / aspiration","8384","HUDSON RCI EAU STÉRILE 650 ml + adaptateur",0,0,0],
+
+  // ULTRAFILTRES
+  ["Ultrafiltres","1255","DIASAFE PLUS 5008201 - ULTRAFILTRE FRESENIUS",0,0,0],
+  ["Ultrafiltres","2786","NIKKISO EF SERIES EF-02D - ULTRAFILTRE NIKKISO",0,0,0]
+].map(([category,code,name,box,carton,pallet]) => ({
+  category, code, name,
+  defaultPackaging:{box,carton,pallet}
+}));
+
+/* =========================================================
+   STOCKAGE
+========================================================= */
 let daily = JSON.parse(localStorage.getItem("daily") || "{}");
 let globalStats = JSON.parse(localStorage.getItem("globalStats") || "{}");
+let orderValues = JSON.parse(localStorage.getItem("orderValues") || "{}");
+let packagingOverrides = JSON.parse(localStorage.getItem("packagingOverrides") || "{}");
+let favorites = JSON.parse(localStorage.getItem("orderFavorites") || "[]");
+let collapsedCategories = JSON.parse(localStorage.getItem("collapsedCategories") || "{}");
+let favoritesOnly = false;
+let allCollapsed = false;
 
 function save(){
   localStorage.setItem("daily", JSON.stringify(daily));
   localStorage.setItem("globalStats", JSON.stringify(globalStats));
+  localStorage.setItem("orderValues", JSON.stringify(orderValues));
+  localStorage.setItem("packagingOverrides", JSON.stringify(packagingOverrides));
+  localStorage.setItem("orderFavorites", JSON.stringify(favorites));
+  localStorage.setItem("collapsedCategories", JSON.stringify(collapsedCategories));
 }
 
-/* =========================
-   ACTIONS
-========================= */
+/* =========================================================
+   APP POCHES ACIDES
+========================================================= */
 function add(id){
   daily[id] = (daily[id] || 0) + 1;
   globalStats[id] = (globalStats[id] || 0) + 1;
-  update();
+  updateAcids();
 }
 
 function remove(id){
   daily[id] = Math.max(0, (daily[id] || 0) - 1);
-  update();
+  updateAcids();
 }
 
-/* =========================
-   UPDATE UI
-========================= */
-function update(){
-  document.querySelectorAll("[data-id]").forEach(el=>{
-    el.innerText = daily[el.dataset.id] || 0;
+function updateAcids(){
+  document.querySelectorAll("[data-acid-id]").forEach(el=>{
+    el.innerText = daily[el.dataset.acidId] || 0;
   });
-
   save();
   updateStats();
   updateTopDay();
 }
 
-/* =========================
-   UI BUILD
-========================= */
-function create(){
-  let app = document.getElementById("app");
+function createAcidApp(){
+  const app = document.getElementById("app");
+  app.innerHTML = "";
 
-  data.forEach(service=>{
-    let section=document.createElement("div");
+  acidData.forEach(service=>{
+    const section=document.createElement("div");
     section.className="service";
 
-    let title=document.createElement("h2");
+    const title=document.createElement("h2");
     title.innerText=service.service;
     section.appendChild(title);
 
     service.chariots.forEach(ch=>{
-      let bloc=document.createElement("div");
+      const bloc=document.createElement("div");
       bloc.className="chariot";
 
-      let sub=document.createElement("h3");
+      const sub=document.createElement("h3");
       sub.innerText=ch.nom;
       bloc.appendChild(sub);
 
       ch.acides.forEach(code=>{
-        let id=`${service.service}_${ch.nom}_${code}`.replace(/\s+/g,"_");
+        const id=`${service.service}_${ch.nom}_${code}`.replace(/\s+/g,"_");
 
-        let row=document.createElement("div");
+        const row=document.createElement("div");
         row.className="row";
         row.onclick=()=>add(id);
 
-        // LEFT BLOCK
-        let left=document.createElement("div");
+        const left=document.createElement("div");
         left.style.display="flex";
         left.style.alignItems="center";
         left.style.gap="12px";
 
-        // LABEL (acide)
-        let label=document.createElement("div");
+        const label=document.createElement("div");
         label.className="label";
         label.innerText=code;
 
-        // COUNT (badge visuel séparé)
-        let count=document.createElement("span");
+        const count=document.createElement("span");
         count.className="count";
-        count.dataset.id=id;
+        count.dataset.acidId=id;
         count.innerText=daily[id]||0;
 
-        // bouton -
-        let minus=document.createElement("button");
-        minus.innerText="-";
+        const minus=document.createElement("button");
+        minus.innerText="−";
         minus.onclick=(e)=>{
           e.stopPropagation();
           remove(id);
         };
 
-        // AJOUT PROPRE (ordre logique + espace visible)
         left.appendChild(label);
         left.appendChild(count);
-
         row.appendChild(left);
         row.appendChild(minus);
-
         bloc.appendChild(row);
       });
 
@@ -273,139 +729,445 @@ function create(){
   });
 }
 
-/* =========================
-   STATS GLOBAL
-========================= */
 function getStockInfo(code, val){
-
   val = Number(val) || 0;
 
-  // 🟥 CAS 470 (cartons)
   if(code.includes("470")){
-    let cartons = Math.floor(val / 2);
-    let palettes = Math.floor(cartons / 50);
-
-    return {
-      unit: "cartons",
-      cartons,
-      palettes
-    };
+    const cartons = Math.floor(val / 2);
+    const palettes = Math.floor(cartons / 50);
+    return {cartons,palettes};
   }
 
-  // 🟨 CAS 3.8L (box 40)
   if(code.includes("3.8L")){
-    let boxes = Math.floor(val / 40);
-    let pallets = Math.floor(boxes / 4);
-
-    return {
-      unit: "boxes",
-      boxes,
-      pallets
-    };
+    const boxes = Math.floor(val / 40);
+    const pallets = Math.floor(boxes / 4);
+    return {boxes,pallets};
   }
 
-  // 🟦 STANDARD (34)
-  let boxes = Math.floor(val / 34);
-  let pallets = Math.floor(boxes / 4);
-
-  return {
-    unit: "boxes",
-    boxes,
-    pallets
-  };
+  const boxes = Math.floor(val / 34);
+  const pallets = Math.floor(boxes / 4);
+  return {boxes,pallets};
 }
 
 function updateStats(){
+  const totals={};
 
-  let totals={};
-
-  for(let k in globalStats){
-    let code=k.split("_").pop();
-    let val = Number(globalStats[k]) || 0;
-
+  for(const k in globalStats){
+    const code=k.split("_").pop();
+    const val=Number(globalStats[k])||0;
     totals[code]=(totals[code]||0)+val;
   }
 
-  let div=document.getElementById("stats");
+  const div=document.getElementById("stats");
   div.innerHTML="";
 
-  Object.entries(totals)
-  .sort((a,b)=>b[1]-a[1])
-  .forEach(([code,val])=>{
-
-    let stock = getStockInfo(code,val);
-
-    let d=document.createElement("div");
-    d.className="statBox";
-
-    let text = `
-      <b>${code}</b><br>
-      ${val} poches<br>
-    `;
-
-    if(stock.cartons !== undefined){
-      text += `📦 ${stock.cartons} cartons<br>`;
-      text += `🧱 ${stock.palettes} palettes<br>`;
-    }
-
-    if(stock.boxes !== undefined){
-      text += `📦 ${stock.boxes} box(es)<br>`;
-      text += `🧱 ${stock.pallets} palettes<br>`;
-    }
-
-    d.innerHTML = text;
-
-    div.appendChild(d);
-  });
-}
-
-/* =========================
-   TOP DU JOUR
-========================= */
-function updateTopDay(){
-  let totals={};
-
-  for(let k in daily){
-    let code=k.split("_").pop();
-    totals[code]=(totals[code]||0)+daily[k];
+  if(Object.keys(totals).length===0){
+    div.innerHTML='<div class="summary-empty">Aucune statistique.</div>';
+    return;
   }
 
-  let div=document.getElementById("topDay");
+  Object.entries(totals)
+    .sort((a,b)=>b[1]-a[1])
+    .forEach(([code,val])=>{
+      const stock=getStockInfo(code,val);
+      const d=document.createElement("div");
+      let text=`<b>${code}</b><br>${val} poches<br>`;
+
+      if(stock.cartons!==undefined){
+        text+=`📦 ${stock.cartons} cartons<br>🧱 ${stock.palettes} palettes<br>`;
+      }
+      if(stock.boxes!==undefined){
+        text+=`📦 ${stock.boxes} boîte(s)<br>🧱 ${stock.pallets} palettes<br>`;
+      }
+
+      d.innerHTML=text;
+      div.appendChild(d);
+    });
+}
+
+function updateTopDay(){
+  const totals={};
+
+  for(const k in daily){
+    const code=k.split("_").pop();
+    totals[code]=(totals[code]||0)+(Number(daily[k])||0);
+  }
+
+  const div=document.getElementById("topDay");
   div.innerHTML="";
 
-  Object.entries(totals)
-  .sort((a,b)=>b[1]-a[1])
-  .slice(0,3)
-  .forEach(([code,val])=>{
-    let d=document.createElement("div");
+  const entries=Object.entries(totals)
+    .filter(([,val])=>val>0)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,3);
+
+  if(entries.length===0){
+    div.innerHTML='<div class="summary-empty">Aucune poche comptée aujourd’hui.</div>';
+    return;
+  }
+
+  entries.forEach(([code,val])=>{
+    const d=document.createElement("div");
     d.innerHTML=`🔥 ${code} : ${val}`;
     div.appendChild(d);
   });
 }
 
-/* =========================
-   TABS
-========================= */
-function showTab(tab){
-  document.getElementById("appTab").style.display="none";
-  document.getElementById("statsTab").style.display="none";
-  document.getElementById(tab).style.display="block";
+/* =========================================================
+   COMMANDES
+========================================================= */
+function productId(product){
+  return product.code;
 }
 
-/* =========================
-   RESET JOUR
-========================= */
+function getPackaging(product){
+  const override=packagingOverrides[productId(product)]||{};
+  return {
+    box:Number(override.box ?? product.defaultPackaging.box) || 0,
+    carton:Number(override.carton ?? product.defaultPackaging.carton) || 0,
+    pallet:Number(override.pallet ?? product.defaultPackaging.pallet) || 0
+  };
+}
+
+function getOrder(product){
+  const id=productId(product);
+  return {
+    boxes:Number(orderValues[id]?.boxes)||0,
+    cartons:Number(orderValues[id]?.cartons)||0,
+    pallets:Number(orderValues[id]?.pallets)||0,
+    units:Number(orderValues[id]?.units)||0
+  };
+}
+
+function calculateUnits(product){
+  const p=getPackaging(product);
+  const q=getOrder(product);
+  return Math.round(
+    q.boxes*p.box +
+    q.cartons*p.carton +
+    q.pallets*p.pallet +
+    q.units
+  );
+}
+
+function setOrderValue(code, field, rawValue){
+  const value=Math.max(0, Number(rawValue)||0);
+  orderValues[code]=orderValues[code]||{};
+  orderValues[code][field]=value;
+  save();
+
+  const product=products.find(p=>p.code===code);
+  if(product){
+    const total=calculateUnits(product);
+    const totalEl=document.getElementById(`total_${safeId(code)}`);
+    if(totalEl){
+      totalEl.textContent=`Total : ${total} unité${total>1?"s":""}`;
+      totalEl.classList.toggle("positive",total>0);
+    }
+  }
+  updateRecap();
+}
+
+function savePackaging(code){
+  const box=Number(document.getElementById(`pack_box_${safeId(code)}`).value)||0;
+  const carton=Number(document.getElementById(`pack_carton_${safeId(code)}`).value)||0;
+  const pallet=Number(document.getElementById(`pack_pallet_${safeId(code)}`).value)||0;
+
+  packagingOverrides[code]={box,carton,pallet};
+  save();
+  renderOrders();
+  showToast("Conditionnement enregistré.");
+}
+
+function resetPackaging(code){
+  delete packagingOverrides[code];
+  save();
+  renderOrders();
+  showToast("Conditionnement d’origine rétabli.");
+}
+
+function toggleSettings(code){
+  const el=document.getElementById(`settings_${safeId(code)}`);
+  if(el) el.classList.toggle("open");
+}
+
+function toggleFavorite(code){
+  if(favorites.includes(code)){
+    favorites=favorites.filter(c=>c!==code);
+  }else{
+    favorites.push(code);
+  }
+  save();
+  renderOrders();
+}
+
+function toggleFavoritesOnly(){
+  favoritesOnly=!favoritesOnly;
+  document.getElementById("favoritesFilterLabel").textContent=
+    favoritesOnly ? "★ Voir tous les produits" : "☆ Afficher les favoris";
+  renderOrders();
+}
+
+function toggleCategory(category){
+  collapsedCategories[category]=!collapsedCategories[category];
+  save();
+  renderOrders();
+}
+
+function expandOrCollapseAll(){
+  allCollapsed=!allCollapsed;
+  const categories=[...new Set(products.map(p=>p.category))];
+  categories.forEach(c=>collapsedCategories[c]=allCollapsed);
+  document.getElementById("expandLabel").textContent=
+    allCollapsed ? "Tout déplier" : "Tout replier";
+  save();
+  renderOrders();
+}
+
+function safeId(value){
+  return String(value).replace(/[^a-zA-Z0-9_-]/g,"_");
+}
+
+function renderOrders(){
+  const search=(document.getElementById("searchCommande")?.value||"")
+    .trim().toLowerCase();
+
+  let visible=products.filter(product=>{
+    const matchesSearch=
+      product.code.toLowerCase().includes(search) ||
+      product.name.toLowerCase().includes(search) ||
+      product.category.toLowerCase().includes(search);
+
+    const matchesFavorites=!favoritesOnly || favorites.includes(product.code);
+    return matchesSearch && matchesFavorites;
+  });
+
+  const container=document.getElementById("commandes");
+  container.innerHTML="";
+
+  if(visible.length===0){
+    container.innerHTML='<div class="summary-empty">Aucun produit trouvé.</div>';
+    updateRecap();
+    return;
+  }
+
+  const categories=[...new Set(visible.map(p=>p.category))];
+
+  categories.forEach(category=>{
+    const section=document.createElement("section");
+    section.className="category";
+
+    const categoryProducts=visible.filter(p=>p.category===category);
+    const isCollapsed=Boolean(collapsedCategories[category]);
+
+    const header=document.createElement("div");
+    header.className="category-header";
+    header.onclick=()=>toggleCategory(category);
+    header.innerHTML=`
+      <h2>${isCollapsed?"▶":"▼"} ${escapeHtml(category)}</h2>
+      <span class="badge">${categoryProducts.length} produit${categoryProducts.length>1?"s":""}</span>
+    `;
+
+    const content=document.createElement("div");
+    content.className="category-content"+(isCollapsed?" hidden":"");
+
+    categoryProducts.forEach(product=>{
+      const id=productId(product);
+      const packaging=getPackaging(product);
+      const order=getOrder(product);
+      const total=calculateUnits(product);
+      const isFavorite=favorites.includes(id);
+      const unknown=packaging.box===0 && packaging.carton===0 && packaging.pallet===0;
+
+      const article=document.createElement("article");
+      article.className="product";
+
+      article.innerHTML=`
+        <div class="product-title">
+          <div>
+            <div class="product-code">${escapeHtml(product.code)}</div>
+            <div class="product-name">${escapeHtml(product.name)}</div>
+            ${unknown?'<span class="badge">Conditionnement à renseigner</span>':''}
+          </div>
+          <button class="favorite" onclick="toggleFavorite('${jsEscape(id)}')" aria-label="Favori">
+            ${isFavorite?"★":"☆"}
+          </button>
+        </div>
+
+        <div class="inputs-grid">
+          <div class="input-box">
+            <label>Boîtes ${packaging.box?`(${packaging.box} u.)`:""}</label>
+            <input type="number" min="0" step="1" value="${order.boxes}"
+              oninput="setOrderValue('${jsEscape(id)}','boxes',this.value)">
+          </div>
+          <div class="input-box">
+            <label>Cartons ${packaging.carton?`(${packaging.carton} u.)`:""}</label>
+            <input type="number" min="0" step="1" value="${order.cartons}"
+              oninput="setOrderValue('${jsEscape(id)}','cartons',this.value)">
+          </div>
+          <div class="input-box">
+            <label>Palettes ${packaging.pallet?`(${packaging.pallet} u.)`:""}</label>
+            <input type="number" min="0" step="1" value="${order.pallets}"
+              oninput="setOrderValue('${jsEscape(id)}','pallets',this.value)">
+          </div>
+          <div class="input-box">
+            <label>Unités directes</label>
+            <input type="number" min="0" step="1" value="${order.units}"
+              oninput="setOrderValue('${jsEscape(id)}','units',this.value)">
+          </div>
+        </div>
+
+        <div id="total_${safeId(id)}" class="total-line ${total>0?"positive":""}">
+          Total : ${total} unité${total>1?"s":""}
+        </div>
+
+        <div class="product-actions">
+          <button onclick="toggleSettings('${jsEscape(id)}')">⚙ Conditionnement</button>
+          <button onclick="clearProductOrder('${jsEscape(id)}')">Effacer</button>
+        </div>
+
+        <div id="settings_${safeId(id)}" class="settings">
+          <div class="hint">
+            Renseigne directement le nombre d’unités contenu dans chaque conditionnement.
+            Exemple : une boîte de 50 → mets 50 dans « unités par boîte ».
+          </div>
+          <div class="settings-grid">
+            <label>Unités par boîte
+              <input id="pack_box_${safeId(id)}" type="number" min="0" value="${packaging.box}">
+            </label>
+            <label>Unités par carton
+              <input id="pack_carton_${safeId(id)}" type="number" min="0" value="${packaging.carton}">
+            </label>
+            <label>Unités par palette
+              <input id="pack_pallet_${safeId(id)}" type="number" min="0" value="${packaging.pallet}">
+            </label>
+          </div>
+          <div class="product-actions">
+            <button class="primary" onclick="savePackaging('${jsEscape(id)}')">Enregistrer</button>
+            <button onclick="resetPackaging('${jsEscape(id)}')">Valeurs d’origine</button>
+          </div>
+        </div>
+      `;
+
+      content.appendChild(article);
+    });
+
+    section.appendChild(header);
+    section.appendChild(content);
+    container.appendChild(section);
+  });
+
+  updateRecap();
+}
+
+function clearProductOrder(code){
+  delete orderValues[code];
+  save();
+  renderOrders();
+}
+
+function updateRecap(){
+  const recap=document.getElementById("recapCommande");
+  const lines=products
+    .map(product=>({product,total:calculateUnits(product)}))
+    .filter(item=>item.total>0);
+
+  if(lines.length===0){
+    recap.innerHTML='<div class="summary-empty">La commande est vide.</div>';
+    return;
+  }
+
+  recap.innerHTML=lines.map(({product,total})=>`
+    <div class="summary-item">
+      <span><b>${escapeHtml(product.code)}</b> — ${escapeHtml(product.name)}</span>
+      <strong>${total}</strong>
+    </div>
+  `).join("");
+}
+
+function getCommandeText(){
+  const lines=products
+    .map(product=>({product,total:calculateUnits(product)}))
+    .filter(item=>item.total>0);
+
+  if(lines.length===0) return "";
+
+  const date=new Date().toLocaleDateString("fr-FR");
+  return [
+    `COMMANDE LT - ${date}`,
+    "",
+    ...lines.map(({product,total})=>`${product.code} ; ${product.name} ; ${total}`),
+    "",
+    `Nombre de références : ${lines.length}`
+  ].join("\n");
+}
+
+async function copyCommande(){
+  const text=getCommandeText();
+  if(!text){
+    showToast("La commande est vide.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Commande copiée.");
+  }catch(error){
+    const area=document.createElement("textarea");
+    area.value=text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+    showToast("Commande copiée.");
+  }
+}
+
+function downloadCommande(){
+  const text=getCommandeText();
+  if(!text){
+    showToast("La commande est vide.");
+    return;
+  }
+
+  const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`commande-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetCommande(){
+  if(confirm("RESET de toute la commande ?")){
+    orderValues={};
+    save();
+    renderOrders();
+  }
+}
+
+/* =========================================================
+   NAVIGATION ET RESET
+========================================================= */
+function showTab(tabId, button){
+  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(el=>el.classList.remove("active"));
+
+  document.getElementById(tabId).classList.add("active");
+  button.classList.add("active");
+
+  if(tabId==="commandesTab") renderOrders();
+}
+
 function resetDay(){
   if(confirm("RESET de la journée ?")){
     daily={};
     save();
-    location.reload();
+    updateAcids();
   }
 }
 
-/* =========================
-   RESET STATS
-========================= */
 function resetStats(){
   if(confirm("RESET des stats globales ?")){
     globalStats={};
@@ -414,11 +1176,33 @@ function resetStats(){
   }
 }
 
-/* =========================
-   INIT
-========================= */
-create();
-update();
+function showToast(message){
+  const toast=document.getElementById("toast");
+  toast.textContent=message;
+  toast.style.display="block";
+  clearTimeout(showToast.timer);
+  showToast.timer=setTimeout(()=>toast.style.display="none",2200);
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function jsEscape(value){
+  return String(value).replaceAll("\\","\\\\").replaceAll("'","\\'");
+}
+
+/* =========================================================
+   INITIALISATION
+========================================================= */
+createAcidApp();
+updateAcids();
+renderOrders();
 </script>
 
 </body>
