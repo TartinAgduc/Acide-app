@@ -402,10 +402,10 @@ button{
   <div class="settings-panel">
     <b>Comment ça marche ?</b>
     <div class="hint">
-      Entre le nombre de boîtes, cartons, palettes ou unités souhaité.
-      Le total en unités est calculé automatiquement.
-      Pour un produit dont le conditionnement est inconnu, appuie sur
-      <b>⚙ Conditionnement</b> puis renseigne les valeurs. Elles sont sauvegardées sur ce téléphone.
+      Choisis le type de conditionnement de chaque produit avec
+      <b>⚙ Conditionnement</b>. L'application gère trois cas :
+      boîte simple, boîtes dans un carton, ou unités dans un carton avec cartons sur palette.
+      Seuls les champs utiles seront affichés.
     </div>
   </div>
 
@@ -618,10 +618,45 @@ const products = [
   // ULTRAFILTRES
   ["Ultrafiltres","1255","DIASAFE PLUS 5008201 - ULTRAFILTRE FRESENIUS",0,0,0],
   ["Ultrafiltres","2786","NIKKISO EF SERIES EF-02D - ULTRAFILTRE NIKKISO",0,0,0]
-].map(([category,code,name,box,carton,pallet]) => ({
-  category, code, name,
-  defaultPackaging:{box,carton,pallet}
-}));
+].map(([category,code,name,box,carton,pallet]) => {
+  let defaultPackaging = {
+    mode: "box",
+    unitsPerBox: 0,
+    boxesPerCarton: 0,
+    unitsPerCarton: 0,
+    cartonsPerPallet: 0
+  };
+
+  if (box > 0 && pallet > 0) {
+    defaultPackaging = {
+      mode: "box_carton",
+      unitsPerBox: box,
+      boxesPerCarton: Math.round(pallet / box) || 0,
+      unitsPerCarton: 0,
+      cartonsPerPallet: 0
+    };
+  } else if (carton > 0 && pallet > 0) {
+    defaultPackaging = {
+      mode: "carton_pallet",
+      unitsPerBox: 0,
+      boxesPerCarton: 0,
+      unitsPerCarton: carton,
+      cartonsPerPallet: Math.round(pallet / carton) || 0
+    };
+  } else if (box > 0) {
+    defaultPackaging.unitsPerBox = box;
+  } else if (carton > 0) {
+    defaultPackaging = {
+      mode: "carton_pallet",
+      unitsPerBox: 0,
+      boxesPerCarton: 0,
+      unitsPerCarton: carton,
+      cartonsPerPallet: 0
+    };
+  }
+
+  return { category, code, name, defaultPackaging };
+});
 
 /* =========================================================
    STOCKAGE
@@ -822,10 +857,14 @@ function productId(product){
 
 function getPackaging(product){
   const override=packagingOverrides[productId(product)]||{};
+  const d=product.defaultPackaging;
+
   return {
-    box:Number(override.box ?? product.defaultPackaging.box) || 0,
-    carton:Number(override.carton ?? product.defaultPackaging.carton) || 0,
-    pallet:Number(override.pallet ?? product.defaultPackaging.pallet) || 0
+    mode:override.mode||d.mode||"box",
+    unitsPerBox:Number(override.unitsPerBox??d.unitsPerBox)||0,
+    boxesPerCarton:Number(override.boxesPerCarton??d.boxesPerCarton)||0,
+    unitsPerCarton:Number(override.unitsPerCarton??d.unitsPerCarton)||0,
+    cartonsPerPallet:Number(override.cartonsPerPallet??d.cartonsPerPallet)||0
   };
 }
 
@@ -834,24 +873,134 @@ function getOrder(product){
   return {
     boxes:Number(orderValues[id]?.boxes)||0,
     cartons:Number(orderValues[id]?.cartons)||0,
-    pallets:Number(orderValues[id]?.pallets)||0,
-    units:Number(orderValues[id]?.units)||0
+    pallets:Number(orderValues[id]?.pallets)||0
   };
 }
 
 function calculateUnits(product){
   const p=getPackaging(product);
   const q=getOrder(product);
+
+  if(p.mode==="box"){
+    return Math.round(q.boxes*p.unitsPerBox);
+  }
+
+  if(p.mode==="box_carton"){
+    return Math.round(
+      q.boxes*p.unitsPerBox +
+      q.cartons*p.boxesPerCarton*p.unitsPerBox
+    );
+  }
+
   return Math.round(
-    q.boxes*p.box +
-    q.cartons*p.carton +
-    q.pallets*p.pallet +
-    q.units
+    q.cartons*p.unitsPerCarton +
+    q.pallets*p.cartonsPerPallet*p.unitsPerCarton
   );
 }
 
-function setOrderValue(code, field, rawValue){
-  const value=Math.max(0, Number(rawValue)||0);
+function packagingComplete(p){
+  if(p.mode==="box") return p.unitsPerBox>0;
+  if(p.mode==="box_carton") return p.unitsPerBox>0 && p.boxesPerCarton>0;
+  return p.unitsPerCarton>0 && p.cartonsPerPallet>0;
+}
+
+function packagingText(p){
+  if(p.mode==="box"){
+    return p.unitsPerBox ? `1 boîte = ${p.unitsPerBox} unité(s)` : "Unités par boîte à renseigner";
+  }
+
+  if(p.mode==="box_carton"){
+    return p.unitsPerBox && p.boxesPerCarton
+      ? `1 boîte = ${p.unitsPerBox} u. · 1 carton = ${p.boxesPerCarton} boîtes`
+      : "Unités par boîte et boîtes par carton à renseigner";
+  }
+
+  return p.unitsPerCarton && p.cartonsPerPallet
+    ? `1 carton = ${p.unitsPerCarton} u. · 1 palette = ${p.cartonsPerPallet} cartons`
+    : "Unités par carton et cartons par palette à renseigner";
+}
+
+function orderFields(product,p,o){
+  const id=jsEscape(product.code);
+
+  if(p.mode==="box"){
+    return `
+      <div class="input-box">
+        <label>Boîtes ${p.unitsPerBox?`(${p.unitsPerBox} u./boîte)`:""}</label>
+        <input type="number" min="0" step="1" value="${o.boxes}"
+          oninput="setOrderValue('${id}','boxes',this.value)">
+      </div>`;
+  }
+
+  if(p.mode==="box_carton"){
+    return `
+      <div class="input-box">
+        <label>Boîtes ${p.unitsPerBox?`(${p.unitsPerBox} u./boîte)`:""}</label>
+        <input type="number" min="0" step="1" value="${o.boxes}"
+          oninput="setOrderValue('${id}','boxes',this.value)">
+      </div>
+      <div class="input-box">
+        <label>Cartons ${p.boxesPerCarton?`(${p.boxesPerCarton} boîtes/carton)`:""}</label>
+        <input type="number" min="0" step="1" value="${o.cartons}"
+          oninput="setOrderValue('${id}','cartons',this.value)">
+      </div>`;
+  }
+
+  return `
+    <div class="input-box">
+      <label>Cartons ${p.unitsPerCarton?`(${p.unitsPerCarton} u./carton)`:""}</label>
+      <input type="number" min="0" step="1" value="${o.cartons}"
+        oninput="setOrderValue('${id}','cartons',this.value)">
+    </div>
+    <div class="input-box">
+      <label>Palettes ${p.cartonsPerPallet?`(${p.cartonsPerPallet} cartons/palette)`:""}</label>
+      <input type="number" min="0" step="1" value="${o.pallets}"
+        oninput="setOrderValue('${id}','pallets',this.value)">
+    </div>`;
+}
+
+function settingsFields(code,p){
+  const sid=safeId(code);
+
+  if(p.mode==="box"){
+    return `
+      <label>Unités par boîte
+        <input id="pack_unitsPerBox_${sid}" type="number" min="0" value="${p.unitsPerBox}">
+      </label>`;
+  }
+
+  if(p.mode==="box_carton"){
+    return `
+      <label>Unités par boîte
+        <input id="pack_unitsPerBox_${sid}" type="number" min="0" value="${p.unitsPerBox}">
+      </label>
+      <label>Boîtes par carton
+        <input id="pack_boxesPerCarton_${sid}" type="number" min="0" value="${p.boxesPerCarton}">
+      </label>`;
+  }
+
+  return `
+    <label>Unités par carton
+      <input id="pack_unitsPerCarton_${sid}" type="number" min="0" value="${p.unitsPerCarton}">
+    </label>
+    <label>Cartons par palette
+      <input id="pack_cartonsPerPallet_${sid}" type="number" min="0" value="${p.cartonsPerPallet}">
+    </label>`;
+}
+
+function changePackagingMode(code,mode){
+  packagingOverrides[code]=packagingOverrides[code]||{};
+  packagingOverrides[code].mode=mode;
+  save();
+  renderOrders();
+  setTimeout(()=>{
+    const el=document.getElementById(`settings_${safeId(code)}`);
+    if(el) el.classList.add("open");
+  },0);
+}
+
+function setOrderValue(code,field,rawValue){
+  const value=Math.max(0,Number(rawValue)||0);
   orderValues[code]=orderValues[code]||{};
   orderValues[code][field]=value;
   save();
@@ -859,21 +1008,45 @@ function setOrderValue(code, field, rawValue){
   const product=products.find(p=>p.code===code);
   if(product){
     const total=calculateUnits(product);
-    const totalEl=document.getElementById(`total_${safeId(code)}`);
-    if(totalEl){
-      totalEl.textContent=`Total : ${total} unité${total>1?"s":""}`;
-      totalEl.classList.toggle("positive",total>0);
+    const el=document.getElementById(`total_${safeId(code)}`);
+    if(el){
+      el.textContent=`Total : ${total} unité${total>1?"s":""}`;
+      el.classList.toggle("positive",total>0);
     }
   }
   updateRecap();
 }
 
-function savePackaging(code){
-  const box=Number(document.getElementById(`pack_box_${safeId(code)}`).value)||0;
-  const carton=Number(document.getElementById(`pack_carton_${safeId(code)}`).value)||0;
-  const pallet=Number(document.getElementById(`pack_pallet_${safeId(code)}`).value)||0;
+function readPack(id){
+  const el=document.getElementById(id);
+  return el?Math.max(0,Number(el.value)||0):0;
+}
 
-  packagingOverrides[code]={box,carton,pallet};
+function savePackaging(code){
+  const product=products.find(p=>p.code===code);
+  if(!product) return;
+
+  const p=getPackaging(product);
+  const sid=safeId(code);
+  const saved={
+    mode:p.mode,
+    unitsPerBox:0,
+    boxesPerCarton:0,
+    unitsPerCarton:0,
+    cartonsPerPallet:0
+  };
+
+  if(p.mode==="box"){
+    saved.unitsPerBox=readPack(`pack_unitsPerBox_${sid}`);
+  }else if(p.mode==="box_carton"){
+    saved.unitsPerBox=readPack(`pack_unitsPerBox_${sid}`);
+    saved.boxesPerCarton=readPack(`pack_boxesPerCarton_${sid}`);
+  }else{
+    saved.unitsPerCarton=readPack(`pack_unitsPerCarton_${sid}`);
+    saved.cartonsPerPallet=readPack(`pack_cartonsPerPallet_${sid}`);
+  }
+
+  packagingOverrides[code]=saved;
   save();
   renderOrders();
   showToast("Conditionnement enregistré.");
@@ -932,12 +1105,11 @@ function renderOrders(){
   const search=(document.getElementById("searchCommande")?.value||"")
     .trim().toLowerCase();
 
-  let visible=products.filter(product=>{
+  const visible=products.filter(product=>{
     const matchesSearch=
       product.code.toLowerCase().includes(search) ||
       product.name.toLowerCase().includes(search) ||
       product.category.toLowerCase().includes(search);
-
     const matchesFavorites=!favoritesOnly || favorites.includes(product.code);
     return matchesSearch && matchesFavorites;
   });
@@ -965,8 +1137,7 @@ function renderOrders(){
     header.onclick=()=>toggleCategory(category);
     header.innerHTML=`
       <h2>${isCollapsed?"▶":"▼"} ${escapeHtml(category)}</h2>
-      <span class="badge">${categoryProducts.length} produit${categoryProducts.length>1?"s":""}</span>
-    `;
+      <span class="badge">${categoryProducts.length} produit${categoryProducts.length>1?"s":""}</span>`;
 
     const content=document.createElement("div");
     content.className="category-content"+(isCollapsed?" hidden":"");
@@ -977,17 +1148,17 @@ function renderOrders(){
       const order=getOrder(product);
       const total=calculateUnits(product);
       const isFavorite=favorites.includes(id);
-      const unknown=packaging.box===0 && packaging.carton===0 && packaging.pallet===0;
+      const incomplete=!packagingComplete(packaging);
 
       const article=document.createElement("article");
       article.className="product";
-
       article.innerHTML=`
         <div class="product-title">
           <div>
             <div class="product-code">${escapeHtml(product.code)}</div>
             <div class="product-name">${escapeHtml(product.name)}</div>
-            ${unknown?'<span class="badge">Conditionnement à renseigner</span>':''}
+            <span class="badge">${escapeHtml(packagingText(packaging))}</span>
+            ${incomplete?'<span class="badge">Conditionnement à compléter</span>':""}
           </div>
           <button class="favorite" onclick="toggleFavorite('${jsEscape(id)}')" aria-label="Favori">
             ${isFavorite?"★":"☆"}
@@ -995,26 +1166,7 @@ function renderOrders(){
         </div>
 
         <div class="inputs-grid">
-          <div class="input-box">
-            <label>Boîtes ${packaging.box?`(${packaging.box} u.)`:""}</label>
-            <input type="number" min="0" step="1" value="${order.boxes}"
-              oninput="setOrderValue('${jsEscape(id)}','boxes',this.value)">
-          </div>
-          <div class="input-box">
-            <label>Cartons ${packaging.carton?`(${packaging.carton} u.)`:""}</label>
-            <input type="number" min="0" step="1" value="${order.cartons}"
-              oninput="setOrderValue('${jsEscape(id)}','cartons',this.value)">
-          </div>
-          <div class="input-box">
-            <label>Palettes ${packaging.pallet?`(${packaging.pallet} u.)`:""}</label>
-            <input type="number" min="0" step="1" value="${order.pallets}"
-              oninput="setOrderValue('${jsEscape(id)}','pallets',this.value)">
-          </div>
-          <div class="input-box">
-            <label>Unités directes</label>
-            <input type="number" min="0" step="1" value="${order.units}"
-              oninput="setOrderValue('${jsEscape(id)}','units',this.value)">
-          </div>
+          ${orderFields(product,packaging,order)}
         </div>
 
         <div id="total_${safeId(id)}" class="total-line ${total>0?"positive":""}">
@@ -1028,26 +1180,36 @@ function renderOrders(){
 
         <div id="settings_${safeId(id)}" class="settings">
           <div class="hint">
-            Renseigne directement le nombre d’unités contenu dans chaque conditionnement.
-            Exemple : une boîte de 50 → mets 50 dans « unités par boîte ».
+            Choisis le type correspondant au produit. Les champs de commande
+            affichés au-dessus changeront automatiquement.
           </div>
+
+          <label style="display:block;margin:10px 0">
+            Type de conditionnement
+            <select
+              style="width:100%;padding:9px;margin-top:5px;border:1px solid var(--border);border-radius:8px;font-size:16px"
+              onchange="changePackagingMode('${jsEscape(id)}',this.value)">
+              <option value="box" ${packaging.mode==="box"?"selected":""}>
+                Boîte simple — commande à la boîte
+              </option>
+              <option value="box_carton" ${packaging.mode==="box_carton"?"selected":""}>
+                Boîtes dans un carton — commande boîte ou carton
+              </option>
+              <option value="carton_pallet" ${packaging.mode==="carton_pallet"?"selected":""}>
+                Unités dans un carton — commande carton ou palette
+              </option>
+            </select>
+          </label>
+
           <div class="settings-grid">
-            <label>Unités par boîte
-              <input id="pack_box_${safeId(id)}" type="number" min="0" value="${packaging.box}">
-            </label>
-            <label>Unités par carton
-              <input id="pack_carton_${safeId(id)}" type="number" min="0" value="${packaging.carton}">
-            </label>
-            <label>Unités par palette
-              <input id="pack_pallet_${safeId(id)}" type="number" min="0" value="${packaging.pallet}">
-            </label>
+            ${settingsFields(id,packaging)}
           </div>
+
           <div class="product-actions">
             <button class="primary" onclick="savePackaging('${jsEscape(id)}')">Enregistrer</button>
             <button onclick="resetPackaging('${jsEscape(id)}')">Valeurs d’origine</button>
           </div>
-        </div>
-      `;
+        </div>`;
 
       content.appendChild(article);
     });
