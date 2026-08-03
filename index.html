@@ -332,6 +332,36 @@ button{
   margin-top:5px;
 }
 
+
+.reference-manager{
+  background:var(--card);
+  padding:12px;
+  margin:14px 0;
+  border-radius:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+.reference-form{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.reference-form input,.reference-form select{
+  width:100%;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  font-size:16px;
+  background:white;
+}
+.reference-form .full{grid-column:1/-1}
+.delete-ref{
+  background:#fff;
+  color:var(--danger);
+  border:1px solid #fecaca;
+}
+@media(max-width:520px){.reference-form{grid-template-columns:1fr}}
+
 #toast{
   position:fixed;
   left:50%;
@@ -409,6 +439,30 @@ button{
     </div>
   </div>
 
+  <div class="reference-manager">
+    <button class="primary" style="width:100%" onclick="toggleReferenceForm()">➕ Ajouter une référence</button>
+
+    <div id="referenceForm" class="settings">
+      <h3>Nouvelle référence</h3>
+      <div class="reference-form">
+        <input id="newRefCode" placeholder="Code GEF / référence">
+        <input id="newRefCategory" placeholder="Catégorie (ex. Pansements)">
+        <input id="newRefName" class="full" placeholder="Désignation du produit">
+        <select id="newRefMode" class="full">
+          <option value="unit">Commande directement à l’unité</option>
+          <option value="box">Boîte simple</option>
+          <option value="box_carton">Boîtes dans un carton</option>
+          <option value="carton_pallet">Unités dans un carton, cartons sur palette</option>
+          <option value="stock_carton_units">Stock en cartons + unités restantes</option>
+        </select>
+        <button class="success full" onclick="addReference()">Enregistrer la référence</button>
+      </div>
+      <div class="hint" style="margin-top:8px">Après l’ajout, utilise « ⚙ Conditionnement » pour renseigner les quantités par boîte, carton ou palette.</div>
+    </div>
+
+    <button class="secondary" style="width:100%;margin-top:8px" onclick="restoreDeletedReferences()">↩ Restaurer les références supprimées</button>
+  </div>
+
   <div id="commandes"></div>
 
   <div class="order-summary">
@@ -467,7 +521,7 @@ const acidData = [
    Les valeurs à 0 sont à renseigner depuis l'application
    avec le bouton "⚙ Conditionnement".
 ========================================================= */
-const products = [
+const baseProducts = [
   // HÉMODIALYSEURS
   ["Hémodialyseurs","8267","FILTRYZER NF-1.6U",0,0,0],
   ["Hémodialyseurs","8266","FILTRYZER NF-2.1U",0,0,0],
@@ -655,8 +709,35 @@ const products = [
     };
   }
 
-  return { category, code, name, defaultPackaging };
+  if(category === "Hémodialyseurs"){
+    defaultPackaging = {
+      mode: "stock_carton_units",
+      unitsPerBox: 0,
+      boxesPerCarton: 0,
+      unitsPerCarton: 0,
+      cartonsPerPallet: 0
+    };
+  }
+
+  return { category, code, name, defaultPackaging, isCustom:false };
 });
+
+let customProducts = JSON.parse(localStorage.getItem("customProducts") || "[]");
+let deletedProductCodes = JSON.parse(localStorage.getItem("deletedProductCodes") || "[]");
+let products = [];
+
+function refreshProducts(){
+  const visibleBase = baseProducts.filter(product => !deletedProductCodes.includes(product.code));
+  const visibleCustom = customProducts
+    .filter(product => !deletedProductCodes.includes(product.code))
+    .map(product => ({...product,isCustom:true}));
+
+  products = [...visibleBase, ...visibleCustom].sort((a,b)=>
+    a.category.localeCompare(b.category,"fr") || a.name.localeCompare(b.name,"fr")
+  );
+}
+
+refreshProducts();
 
 /* =========================================================
    STOCKAGE
@@ -677,6 +758,8 @@ function save(){
   localStorage.setItem("packagingOverrides", JSON.stringify(packagingOverrides));
   localStorage.setItem("orderFavorites", JSON.stringify(favorites));
   localStorage.setItem("collapsedCategories", JSON.stringify(collapsedCategories));
+  localStorage.setItem("customProducts", JSON.stringify(customProducts));
+  localStorage.setItem("deletedProductCodes", JSON.stringify(deletedProductCodes));
 }
 
 /* =========================================================
@@ -851,6 +934,92 @@ function updateTopDay(){
 /* =========================================================
    COMMANDES
 ========================================================= */
+function toggleReferenceForm(){
+  document.getElementById("referenceForm").classList.toggle("open");
+}
+
+function emptyPackagingForMode(mode){
+  return {
+    mode,
+    unitsPerBox:0,
+    boxesPerCarton:0,
+    unitsPerCarton:0,
+    cartonsPerPallet:0
+  };
+}
+
+function addReference(){
+  const code=document.getElementById("newRefCode").value.trim();
+  const category=document.getElementById("newRefCategory").value.trim();
+  const name=document.getElementById("newRefName").value.trim();
+  const mode=document.getElementById("newRefMode").value;
+
+  if(!code || !category || !name){
+    showToast("Renseigne le code, la catégorie et la désignation.");
+    return;
+  }
+
+  const exists=[...baseProducts,...customProducts].some(product=>product.code.toLowerCase()===code.toLowerCase());
+  if(exists){
+    showToast("Cette référence existe déjà.");
+    return;
+  }
+
+  customProducts.push({
+    category, code, name,
+    defaultPackaging:emptyPackagingForMode(mode),
+    isCustom:true
+  });
+
+  deletedProductCodes=deletedProductCodes.filter(item=>item!==code);
+  save();
+  refreshProducts();
+
+  document.getElementById("newRefCode").value="";
+  document.getElementById("newRefCategory").value="";
+  document.getElementById("newRefName").value="";
+  document.getElementById("referenceForm").classList.remove("open");
+
+  renderOrders();
+  showToast("Référence ajoutée.");
+}
+
+function deleteReference(code){
+  const product=[...baseProducts,...customProducts].find(item=>item.code===code);
+  if(!product) return;
+
+  if(!confirm(`Supprimer la référence ${product.code} — ${product.name} ?`)) return;
+
+  if(product.isCustom || customProducts.some(item=>item.code===code)){
+    customProducts=customProducts.filter(item=>item.code!==code);
+  }else if(!deletedProductCodes.includes(code)){
+    deletedProductCodes.push(code);
+  }
+
+  delete orderValues[code];
+  delete packagingOverrides[code];
+  favorites=favorites.filter(item=>item!==code);
+  save();
+  refreshProducts();
+  renderOrders();
+  showToast("Référence supprimée.");
+}
+
+function restoreDeletedReferences(){
+  if(deletedProductCodes.length===0){
+    showToast("Aucune référence supprimée.");
+    return;
+  }
+
+  if(confirm("Restaurer toutes les références d’origine supprimées ?")){
+    deletedProductCodes=[];
+    save();
+    refreshProducts();
+    renderOrders();
+    showToast("Références restaurées.");
+  }
+}
+
 function productId(product){
   return product.code;
 }
@@ -858,9 +1027,10 @@ function productId(product){
 function getPackaging(product){
   const override=packagingOverrides[productId(product)]||{};
   const d=product.defaultPackaging;
+  const forcedMode=product.category==="Hémodialyseurs" ? "stock_carton_units" : null;
 
   return {
-    mode:override.mode||d.mode||"box",
+    mode:forcedMode||override.mode||d.mode||"box",
     unitsPerBox:Number(override.unitsPerBox??d.unitsPerBox)||0,
     boxesPerCarton:Number(override.boxesPerCarton??d.boxesPerCarton)||0,
     unitsPerCarton:Number(override.unitsPerCarton??d.unitsPerCarton)||0,
@@ -873,13 +1043,25 @@ function getOrder(product){
   return {
     boxes:Number(orderValues[id]?.boxes)||0,
     cartons:Number(orderValues[id]?.cartons)||0,
-    pallets:Number(orderValues[id]?.pallets)||0
+    pallets:Number(orderValues[id]?.pallets)||0,
+    looseUnits:Number(orderValues[id]?.looseUnits)||0,
+    units:Number(orderValues[id]?.units)||0
   };
 }
 
 function calculateUnits(product){
   const p=getPackaging(product);
   const q=getOrder(product);
+
+  if(p.mode==="stock_carton_units"){
+    return Math.round(
+      q.cartons*p.unitsPerCarton + q.looseUnits
+    );
+  }
+
+  if(p.mode==="unit"){
+    return Math.round(q.units);
+  }
 
   if(p.mode==="box"){
     return Math.round(q.boxes*p.unitsPerBox);
@@ -899,12 +1081,24 @@ function calculateUnits(product){
 }
 
 function packagingComplete(p){
+  if(p.mode==="unit") return true;
+  if(p.mode==="stock_carton_units") return p.unitsPerCarton>0;
   if(p.mode==="box") return p.unitsPerBox>0;
   if(p.mode==="box_carton") return p.unitsPerBox>0 && p.boxesPerCarton>0;
   return p.unitsPerCarton>0 && p.cartonsPerPallet>0;
 }
 
 function packagingText(p){
+  if(p.mode==="unit"){
+    return "Commande directement à l’unité";
+  }
+
+  if(p.mode==="stock_carton_units"){
+    return p.unitsPerCarton
+      ? `Stock : cartons de ${p.unitsPerCarton} unité(s) + unités restantes`
+      : "Unités par carton à renseigner";
+  }
+
   if(p.mode==="box"){
     return p.unitsPerBox ? `1 boîte = ${p.unitsPerBox} unité(s)` : "Unités par boîte à renseigner";
   }
@@ -922,6 +1116,29 @@ function packagingText(p){
 
 function orderFields(product,p,o){
   const id=jsEscape(product.code);
+
+  if(p.mode==="unit"){
+    return `
+      <div class="input-box">
+        <label>Unités</label>
+        <input type="number" min="0" step="1" value="${o.units}"
+          oninput="setOrderValue('${id}','units',this.value)">
+      </div>`;
+  }
+
+  if(p.mode==="stock_carton_units"){
+    return `
+      <div class="input-box">
+        <label>Cartons fermés ${p.unitsPerCarton?`(${p.unitsPerCarton} u./carton)`:""}</label>
+        <input type="number" min="0" step="1" value="${o.cartons}"
+          oninput="setOrderValue('${id}','cartons',this.value)">
+      </div>
+      <div class="input-box">
+        <label>Unités restantes dans le carton ouvert</label>
+        <input type="number" min="0" step="1" value="${o.looseUnits}"
+          oninput="setOrderValue('${id}','looseUnits',this.value)">
+      </div>`;
+  }
 
   if(p.mode==="box"){
     return `
@@ -961,6 +1178,17 @@ function orderFields(product,p,o){
 
 function settingsFields(code,p){
   const sid=safeId(code);
+
+  if(p.mode==="unit"){
+    return `<div class="hint">Aucun conditionnement à renseigner : la quantité saisie est déjà exprimée en unités.</div>`;
+  }
+
+  if(p.mode==="stock_carton_units"){
+    return `
+      <label>Unités par carton
+        <input id="pack_unitsPerCarton_${sid}" type="number" min="0" value="${p.unitsPerCarton}">
+      </label>`;
+  }
 
   if(p.mode==="box"){
     return `
@@ -1010,7 +1238,7 @@ function setOrderValue(code,field,rawValue){
     const total=calculateUnits(product);
     const el=document.getElementById(`total_${safeId(code)}`);
     if(el){
-      el.textContent=`Total : ${total} unité${total>1?"s":""}`;
+      el.textContent=totalLabel(product,total);
       el.classList.toggle("positive",total>0);
     }
   }
@@ -1036,7 +1264,11 @@ function savePackaging(code){
     cartonsPerPallet:0
   };
 
-  if(p.mode==="box"){
+  if(p.mode==="unit"){
+    // Aucun paramètre supplémentaire pour une commande à l’unité.
+  }else if(p.mode==="stock_carton_units"){
+    saved.unitsPerCarton=readPack(`pack_unitsPerCarton_${sid}`);
+  }else if(p.mode==="box"){
     saved.unitsPerBox=readPack(`pack_unitsPerBox_${sid}`);
   }else if(p.mode==="box_carton"){
     saved.unitsPerBox=readPack(`pack_unitsPerBox_${sid}`);
@@ -1099,6 +1331,41 @@ function expandOrCollapseAll(){
 
 function safeId(value){
   return String(value).replace(/[^a-zA-Z0-9_-]/g,"_");
+}
+
+function packagingModeSelector(product,packaging){
+  if(product.category==="Hémodialyseurs"){
+    return `
+      <div class="hint" style="margin:10px 0">
+        Mode stock : cartons fermés + unités restantes dans le carton ouvert.
+      </div>`;
+  }
+
+  return `
+    <label style="display:block;margin:10px 0">
+      Type de conditionnement
+      <select
+        style="width:100%;padding:9px;margin-top:5px;border:1px solid var(--border);border-radius:8px;font-size:16px"
+        onchange="changePackagingMode('${jsEscape(product.code)}',this.value)">
+        <option value="unit" ${packaging.mode==="unit"?"selected":""}>
+          Unité simple — commande directement à l’unité
+        </option>
+        <option value="box" ${packaging.mode==="box"?"selected":""}>
+          Boîte simple — commande à la boîte
+        </option>
+        <option value="box_carton" ${packaging.mode==="box_carton"?"selected":""}>
+          Boîtes dans un carton — commande boîte ou carton
+        </option>
+        <option value="carton_pallet" ${packaging.mode==="carton_pallet"?"selected":""}>
+          Unités dans un carton — commande carton ou palette
+        </option>
+      </select>
+    </label>`;
+}
+
+function totalLabel(product,total){
+  const prefix=product.category==="Hémodialyseurs" ? "Stock total" : "Total";
+  return `${prefix} : ${total} unité${total>1?"s":""}`;
 }
 
 function renderOrders(){
@@ -1170,12 +1437,13 @@ function renderOrders(){
         </div>
 
         <div id="total_${safeId(id)}" class="total-line ${total>0?"positive":""}">
-          Total : ${total} unité${total>1?"s":""}
+          ${totalLabel(product,total)}
         </div>
 
         <div class="product-actions">
           <button onclick="toggleSettings('${jsEscape(id)}')">⚙ Conditionnement</button>
           <button onclick="clearProductOrder('${jsEscape(id)}')">Effacer</button>
+          <button class="delete-ref" onclick="deleteReference('${jsEscape(id)}')">🗑 Supprimer la réf.</button>
         </div>
 
         <div id="settings_${safeId(id)}" class="settings">
@@ -1184,22 +1452,7 @@ function renderOrders(){
             affichés au-dessus changeront automatiquement.
           </div>
 
-          <label style="display:block;margin:10px 0">
-            Type de conditionnement
-            <select
-              style="width:100%;padding:9px;margin-top:5px;border:1px solid var(--border);border-radius:8px;font-size:16px"
-              onchange="changePackagingMode('${jsEscape(id)}',this.value)">
-              <option value="box" ${packaging.mode==="box"?"selected":""}>
-                Boîte simple — commande à la boîte
-              </option>
-              <option value="box_carton" ${packaging.mode==="box_carton"?"selected":""}>
-                Boîtes dans un carton — commande boîte ou carton
-              </option>
-              <option value="carton_pallet" ${packaging.mode==="carton_pallet"?"selected":""}>
-                Unités dans un carton — commande carton ou palette
-              </option>
-            </select>
-          </label>
+          ${packagingModeSelector(product,packaging)}
 
           <div class="settings-grid">
             ${settingsFields(id,packaging)}
