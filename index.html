@@ -316,6 +316,60 @@ button{
 
 .summary-item:last-child{border-bottom:none}
 
+.recap-category{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  margin:10px 0;
+  overflow:hidden;
+  background:white;
+}
+
+.recap-category-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  background:#f8fafc;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.recap-category-content{padding:0 12px}
+.recap-category-content.hidden{display:none}
+
+.summary-item.highlighted{
+  background:#fef3c7;
+  margin:0 -12px;
+  padding:10px 12px;
+  border-left:5px solid #f59e0b;
+}
+
+.summary-main{
+  min-width:0;
+  flex:1;
+}
+
+.summary-name{
+  font-size:14px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.summary-right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
+
+.highlight-button{
+  border:none;
+  background:transparent;
+  padding:3px 5px;
+  font-size:22px;
+}
+
 .summary-empty{
   color:var(--muted);
   text-align:center;
@@ -404,6 +458,88 @@ button{
   .inputs-grid,.settings-grid{grid-template-columns:1fr 1fr}
   .command-toolbar{grid-template-columns:1fr}
 }
+
+
+/* MODES DE L'APPLICATION */
+.mode-management,
+.mode-settings{
+  display:none !important;
+}
+
+body.mode-gestion .mode-management{
+  display:inline-flex !important;
+}
+
+body.mode-gestion .mode-management-block{
+  display:block !important;
+}
+
+body.mode-parametres .mode-settings{
+  display:inline-flex !important;
+}
+
+body.mode-parametres .mode-settings-block{
+  display:block !important;
+}
+
+.app-mode-bar{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  margin:0 0 12px;
+  padding:8px;
+  background:white;
+  border-radius:13px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  position:sticky;
+  top:64px;
+  z-index:19;
+}
+
+.app-mode-bar button{
+  padding:10px 5px;
+  font-size:14px;
+}
+
+.app-mode-bar button.active{
+  background:var(--primary);
+  color:white;
+  border-color:var(--primary);
+}
+
+body.mode-gestion .app-mode-bar button[data-mode="gestion"]{
+  background:var(--warning);
+  color:white;
+  border-color:var(--warning);
+}
+
+body.mode-parametres .app-mode-bar button[data-mode="parametres"]{
+  background:var(--danger);
+  color:white;
+  border-color:var(--danger);
+}
+
+.mode-banner{
+  display:none;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
+  font-size:14px;
+  text-align:center;
+}
+
+body.mode-gestion .mode-banner.gestion{
+  display:block;
+  background:#fff7ed;
+  color:#9a3412;
+}
+
+body.mode-parametres .mode-banner.parametres{
+  display:block;
+  background:#fee2e2;
+  color:#991b1b;
+}
+
 </style>
 </head>
 
@@ -417,17 +553,38 @@ button{
   <button id="tabBtnCommandes" onclick="showTab('commandesTab', this)">Commandes</button>
 </div>
 
+
+<div class="app-mode-bar">
+  <button data-mode="utilisation" class="active" onclick="setAppMode('utilisation')">
+    🟢 Utilisation
+  </button>
+  <button data-mode="gestion" onclick="setAppMode('gestion')">
+    🟡 Gestion
+  </button>
+  <button data-mode="parametres" onclick="setAppMode('parametres')">
+    🔴 Paramètres
+  </button>
+</div>
+
+<div class="mode-banner gestion">
+  Mode Gestion : les boutons d’ajout, de suppression et de conditionnement sont visibles.
+</div>
+<div class="mode-banner parametres">
+  Mode Paramètres : les fonctions de restauration et de remise à zéro sont visibles.
+</div>
+
+
 <!-- APP -->
 <div id="appTab" class="page active">
   <div class="acid-toolbar">
     <label class="acid-select-label" for="serviceSelect">Service</label>
     <select id="serviceSelect" onchange="selectAcidService(this.value)"></select>
 
-    <button class="primary" style="width:100%;margin-top:10px" onclick="toggleAcidManager()">
+    <button class="primary mode-management" style="width:100%;margin-top:10px" onclick="toggleAcidManager()">
       ⚙ Gérer les services, chariots et acides
     </button>
 
-    <div id="acidManager" class="settings">
+    <div id="acidManager" class="settings mode-management-block">
       <h3>Ajouter un service</h3>
       <div class="acid-manager-grid">
         <input id="newServiceName" class="full" placeholder="Nom du service, ex. HD7">
@@ -438,21 +595,21 @@ button{
       <div class="acid-manager-grid">
         <input id="newChariotName" class="full" placeholder="Nom du nouveau chariot">
         <button class="success full" onclick="addAcidChariot()">Ajouter un chariot</button>
-        <button class="icon-danger full" onclick="deleteSelectedAcidService()">🗑 Supprimer ce service</button>
+        <button class="icon-danger full mode-management" onclick="deleteSelectedAcidService()">🗑 Supprimer ce service</button>
       </div>
 
       <div class="hint" style="margin-top:10px">
         Pour ajouter un acide, utilise le bouton « Ajouter un acide » sous le chariot concerné.
         Toutes les modifications sont sauvegardées sur cet appareil.
       </div>
-      <button class="secondary" style="width:100%;margin-top:10px" onclick="restoreDefaultAcidStructure()">
+      <button class="secondary mode-settings" style="width:100%;margin-top:10px" onclick="restoreDefaultAcidStructure()">
         Restaurer la structure d’origine
       </button>
     </div>
   </div>
 
   <div id="app"></div>
-  <button class="reset" onclick="resetDay()">RESET JOURNÉE</button>
+  <button class="reset mode-settings" onclick="resetDay()">RESET JOURNÉE</button>
 </div>
 
 <!-- STATS -->
@@ -463,7 +620,7 @@ button{
   <h2 style="text-align:center;">Top du jour</h2>
   <div id="topDay"></div>
 
-  <button class="reset" onclick="resetStats()">RESET STATS GLOBAL</button>
+  <button class="reset mode-settings" onclick="resetStats()">RESET STATS GLOBAL</button>
 </div>
 
 <!-- COMMANDES -->
@@ -493,10 +650,10 @@ button{
     </div>
   </div>
 
-  <div class="reference-manager">
-    <button class="primary" style="width:100%" onclick="toggleReferenceForm()">➕ Ajouter une référence</button>
+  <div class="reference-manager mode-management-block">
+    <button class="primary mode-management" style="width:100%" onclick="toggleReferenceForm()">➕ Ajouter une référence</button>
 
-    <div id="referenceForm" class="settings">
+    <div id="referenceForm" class="settings mode-management-block">
       <h3>Nouvelle référence</h3>
       <div class="reference-form">
         <input id="newRefCode" placeholder="Code GEF / référence">
@@ -514,7 +671,7 @@ button{
       <div class="hint" style="margin-top:8px">Après l’ajout, utilise « ⚙ Conditionnement » pour renseigner les quantités par boîte, carton ou palette.</div>
     </div>
 
-    <button class="secondary" style="width:100%;margin-top:8px" onclick="restoreDeletedReferences()">↩ Restaurer les références supprimées</button>
+    <button class="secondary mode-settings" style="width:100%;margin-top:8px" onclick="restoreDeletedReferences()">↩ Restaurer les références supprimées</button>
   </div>
 
   <div id="commandes"></div>
@@ -526,7 +683,7 @@ button{
       <button class="primary" onclick="copyCommande()">📋 Copier la commande</button>
       <button class="success" onclick="downloadCommande()">⬇ Télécharger en texte</button>
     </div>
-    <button class="reset" onclick="resetCommande()">RESET COMMANDE</button>
+    <button class="reset mode-settings" onclick="resetCommande()">RESET COMMANDE</button>
   </div>
 </div>
 
@@ -809,6 +966,8 @@ let orderValues = JSON.parse(localStorage.getItem("orderValues") || "{}");
 let packagingOverrides = JSON.parse(localStorage.getItem("packagingOverrides") || "{}");
 let favorites = JSON.parse(localStorage.getItem("orderFavorites") || "[]");
 let collapsedCategories = JSON.parse(localStorage.getItem("collapsedCategories") || "{}");
+let recapHighlights = JSON.parse(localStorage.getItem("recapHighlights") || "[]");
+let recapCollapsedCategories = JSON.parse(localStorage.getItem("recapCollapsedCategories") || "{}");
 let favoritesOnly = false;
 let allCollapsed = false;
 
@@ -819,6 +978,8 @@ function save(){
   localStorage.setItem("packagingOverrides", JSON.stringify(packagingOverrides));
   localStorage.setItem("orderFavorites", JSON.stringify(favorites));
   localStorage.setItem("collapsedCategories", JSON.stringify(collapsedCategories));
+  localStorage.setItem("recapHighlights", JSON.stringify(recapHighlights));
+  localStorage.setItem("recapCollapsedCategories", JSON.stringify(recapCollapsedCategories));
   localStorage.setItem("customProducts", JSON.stringify(customProducts));
   localStorage.setItem("deletedProductCodes", JSON.stringify(deletedProductCodes));
   localStorage.setItem("acidStructure", JSON.stringify(acidData));
@@ -908,7 +1069,7 @@ function createAcidApp(){
     header.appendChild(sub);
 
     const deleteChariot=document.createElement("button");
-    deleteChariot.className="icon-danger";
+    deleteChariot.className="icon-danger mode-management";
     deleteChariot.innerText="🗑 Chariot";
     deleteChariot.onclick=()=>deleteAcidChariot(chariotIndex);
     header.appendChild(deleteChariot);
@@ -942,7 +1103,7 @@ function createAcidApp(){
       minus.onclick=(e)=>{e.stopPropagation();remove(id);};
 
       const deleteAcid=document.createElement("button");
-      deleteAcid.className="icon-danger";
+      deleteAcid.className="icon-danger mode-management";
       deleteAcid.innerText="🗑";
       deleteAcid.onclick=(e)=>{e.stopPropagation();deleteAcidType(chariotIndex,acidIndex);};
 
@@ -956,7 +1117,7 @@ function createAcidApp(){
     });
 
     const addAcidButton=document.createElement("button");
-    addAcidButton.className="secondary";
+    addAcidButton.className="secondary mode-management";
     addAcidButton.style.width="100%";
     addAcidButton.style.marginTop="8px";
     addAcidButton.innerText="➕ Ajouter un acide";
@@ -1661,9 +1822,9 @@ function renderOrders(){
         </div>
 
         <div class="product-actions">
-          <button onclick="toggleSettings('${jsEscape(id)}')">⚙ Conditionnement</button>
+          <button class="mode-management" onclick="toggleSettings('${jsEscape(id)}')">⚙ Conditionnement</button>
           <button onclick="clearProductOrder('${jsEscape(id)}')">Effacer</button>
-          <button class="delete-ref" onclick="deleteReference('${jsEscape(id)}')">🗑 Supprimer la réf.</button>
+          <button class="delete-ref mode-management" onclick="deleteReference('${jsEscape(id)}')">🗑 Supprimer la réf.</button>
         </div>
 
         <div id="settings_${safeId(id)}" class="settings">
@@ -1701,23 +1862,67 @@ function clearProductOrder(code){
   renderOrders();
 }
 
+function toggleRecapCategory(category){
+  recapCollapsedCategories[category]=!recapCollapsedCategories[category];
+  save();
+  updateRecap();
+}
+
+function toggleRecapHighlight(code){
+  if(recapHighlights.includes(code)){
+    recapHighlights=recapHighlights.filter(item=>item!==code);
+  }else{
+    recapHighlights.push(code);
+  }
+  save();
+  updateRecap();
+}
+
 function updateRecap(){
   const recap=document.getElementById("recapCommande");
-  const lines=products
-    .map(product=>({product,total:calculateUnits(product)}))
-    .filter(item=>item.total>0);
 
-  if(lines.length===0){
-    recap.innerHTML='<div class="summary-empty">La commande est vide.</div>';
-    return;
-  }
+  // Toutes les références sont affichées, même lorsque le total est égal à zéro.
+  // L'ordre des catégories et des produits reprend l'ordre actuellement utilisé dans l'app.
+  const categories=[...new Set(products.map(product=>product.category))];
 
-  recap.innerHTML=lines.map(({product,total})=>`
-    <div class="summary-item">
-      <span><b>${escapeHtml(product.code)}</b> — ${escapeHtml(product.name)}</span>
-      <strong>${total}</strong>
-    </div>
-  `).join("");
+  recap.innerHTML=categories.map(category=>{
+    const categoryProducts=products.filter(product=>product.category===category);
+    const collapsed=Boolean(recapCollapsedCategories[category]);
+
+    const items=categoryProducts.map(product=>{
+      const total=calculateUnits(product);
+      const highlighted=recapHighlights.includes(product.code);
+
+      return `
+        <div class="summary-item ${highlighted?"highlighted":""}">
+          <div class="summary-main">
+            <div><b>${escapeHtml(product.code)}</b></div>
+            <div class="summary-name">${escapeHtml(product.name)}</div>
+          </div>
+          <div class="summary-right">
+            <strong>${total}</strong>
+            <button
+              class="highlight-button"
+              onclick="toggleRecapHighlight('${jsEscape(product.code)}')"
+              title="${highlighted?"Retirer le surlignage":"Surligner ce produit"}"
+              aria-label="${highlighted?"Retirer le surlignage":"Surligner ce produit"}">
+              ${highlighted?"★":"☆"}
+            </button>
+          </div>
+        </div>`;
+    }).join("");
+
+    return `
+      <section class="recap-category">
+        <div class="recap-category-header" onclick="toggleRecapCategory('${jsEscape(category)}')">
+          <span>${collapsed?"▶":"▼"} ${escapeHtml(category)}</span>
+          <span class="badge">${categoryProducts.length}</span>
+        </div>
+        <div class="recap-category-content ${collapsed?"hidden":""}">
+          ${items}
+        </div>
+      </section>`;
+  }).join("");
 }
 
 function getCommandeText(){
@@ -1782,6 +1987,53 @@ function resetCommande(){
   }
 }
 
+let appMode = "utilisation";
+
+function setAppMode(mode){
+  if(!["utilisation","gestion","parametres"].includes(mode)) return;
+
+  if(mode==="gestion" && appMode!=="gestion"){
+    const accepted=confirm(
+      "Entrer en mode Gestion ?\n\n" +
+      "Dans ce mode, tu peux ajouter, modifier ou supprimer des données."
+    );
+    if(!accepted) return;
+  }
+
+  if(mode==="parametres" && appMode!=="parametres"){
+    const accepted=confirm(
+      "Entrer dans les Paramètres ?\n\n" +
+      "Les boutons de remise à zéro et de restauration seront visibles."
+    );
+    if(!accepted) return;
+  }
+
+  appMode=mode;
+  document.body.classList.remove("mode-gestion","mode-parametres");
+
+  if(mode==="gestion") document.body.classList.add("mode-gestion");
+  if(mode==="parametres") document.body.classList.add("mode-parametres");
+
+  document.querySelectorAll(".app-mode-bar button").forEach(button=>{
+    button.classList.toggle("active",button.dataset.mode===mode);
+  });
+
+  // Ferme les panneaux techniques lorsqu'on revient à l'utilisation normale.
+  if(mode==="utilisation"){
+    document.querySelectorAll(".settings.open").forEach(el=>el.classList.remove("open"));
+  }
+
+  createAcidApp();
+  renderOrders();
+
+  const labels={
+    utilisation:"Mode Utilisation activé.",
+    gestion:"Mode Gestion activé.",
+    parametres:"Mode Paramètres activé."
+  };
+  showToast(labels[mode]);
+}
+
 /* =========================================================
    NAVIGATION ET RESET
 ========================================================= */
@@ -1839,6 +2091,7 @@ function jsEscape(value){
 createAcidApp();
 updateAcids();
 renderOrders();
+setAppMode("utilisation");
 </script>
 
 </body>
