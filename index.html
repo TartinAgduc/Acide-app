@@ -663,6 +663,21 @@ body.mode-gestion .inline-edit-name:hover{
   outline:2px dashed var(--primary);
   outline-offset:4px;
 }
+
+.summary-main .summary-name{
+  font-size:18px;
+  font-weight:700;
+  color:var(--text);
+  line-height:1.3;
+}
+
+.summary-main .summary-code{
+  margin-top:3px;
+  font-size:13px;
+  font-weight:normal;
+  color:var(--muted);
+}
+
 </style>
 </head>
 
@@ -2339,8 +2354,8 @@ function updateRecap(){
       return `
         <div class="summary-item ${highlighted?"highlighted":""}">
           <div class="summary-main">
-            <div><b>${escapeHtml(product.code)}</b></div>
             <div class="summary-name">${escapeHtml(product.name)}</div>
+            <div class="summary-code">Réf. ${escapeHtml(product.code)}</div>
           </div>
           <div class="summary-right">
             <strong>${total}</strong>
