@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Poches Acides & Commandes</title>
+<title>App Magasin LT</title>
 
 <style>
 :root{
@@ -198,16 +198,65 @@ button{
   align-items:flex-start;
 }
 
-.product-code{
-  font-weight:bold;
-  color:var(--primary);
+.product-name{
+  font-size:20px;
+  font-weight:700;
+  color:var(--text);
+  line-height:1.3;
 }
 
-.product-name{
-  font-size:16px;
+.product-code{
+  font-size:14px;
+  font-weight:normal;
   color:var(--muted);
-  margin-top:3px;
-  line-height:1.35;
+  margin-top:4px;
+}
+
+.category-order-actions{
+  display:none;
+  gap:5px;
+  margin-left:auto;
+  margin-right:8px;
+}
+
+body.mode-gestion .category-order-actions{
+  display:flex;
+}
+
+.category-order-actions button{
+  padding:5px 8px;
+  font-size:14px;
+}
+
+.reference-edit-panel{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:#eff6ff;
+}
+
+.reference-edit-panel.open{
+  display:block;
+}
+
+.reference-edit-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.reference-edit-grid .full{
+  grid-column:1/-1;
+}
+
+.reference-edit-grid input,
+.reference-edit-grid select{
+  width:100%;
+  padding:9px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:16px;
 }
 
 .favorite{
@@ -474,14 +523,6 @@ body.mode-gestion .mode-management-block{
   display:block !important;
 }
 
-body.mode-parametres .mode-settings{
-  display:inline-flex !important;
-}
-
-body.mode-parametres .mode-settings-block{
-  display:block !important;
-}
-
 .app-mode-bar{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -513,11 +554,7 @@ body.mode-gestion .app-mode-bar button[data-mode="gestion"]{
   border-color:var(--warning);
 }
 
-body.mode-parametres .app-mode-bar button[data-mode="parametres"]{
-  background:var(--danger);
-  color:white;
-  border-color:var(--danger);
-}
+
 
 .mode-banner{
   display:none;
@@ -534,18 +571,111 @@ body.mode-gestion .mode-banner.gestion{
   color:#9a3412;
 }
 
-body.mode-parametres .mode-banner.parametres{
-  display:block;
-  background:#fee2e2;
-  color:#991b1b;
+
+
+
+.app-header{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:56px;
 }
 
+.app-header h1{
+  margin:12px 52px;
+}
+
+.management-bubble{
+  position:absolute;
+  right:4px;
+  top:50%;
+  transform:translateY(-50%);
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  padding:0;
+  background:white;
+  border:1px solid var(--border);
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
+  font-size:20px;
+}
+
+body.mode-gestion .management-bubble{
+  background:var(--warning);
+  color:white;
+  border-color:var(--warning);
+}
+
+.management-status{
+  display:none;
+  margin:0 0 10px;
+  padding:9px;
+  border-radius:10px;
+  background:#fff7ed;
+  color:#9a3412;
+  text-align:center;
+  font-size:14px;
+}
+
+body.mode-gestion .management-status{
+  display:block;
+}
+
+.drag-handle{
+  display:none;
+  cursor:grab;
+  user-select:none;
+  font-size:24px;
+  padding:4px 8px;
+  color:var(--muted);
+}
+
+body.mode-gestion .drag-handle{
+  display:inline-flex;
+}
+
+.product.dragging{
+  opacity:.45;
+}
+
+.category.dragging{
+  opacity:.45;
+}
+
+.inline-edit-name{
+  cursor:default;
+}
+
+body.mode-gestion .inline-edit-name{
+  cursor:text;
+  outline:1px dashed transparent;
+  border-radius:6px;
+  padding:2px 4px;
+}
+
+body.mode-gestion .inline-edit-name:hover{
+  outline-color:var(--primary);
+  background:#eff6ff;
+}
+
+.drop-target{
+  outline:2px dashed var(--primary);
+  outline-offset:4px;
+}
 </style>
 </head>
 
 <body>
 
-<h1>Poches Acides</h1>
+
+<div class="app-header">
+  <h1>App Magasin LT</h1>
+  <button id="managementBubble" class="management-bubble" onclick="toggleManagementMode()" title="Mode Gestion">
+    ✏
+  </button>
+</div>
+
 
 <div class="tabs">
   <button id="tabBtnApp" class="active" onclick="showTab('appTab', this)">App</button>
@@ -554,27 +684,16 @@ body.mode-parametres .mode-banner.parametres{
 </div>
 
 
-<div class="app-mode-bar">
-  <button data-mode="utilisation" class="active" onclick="setAppMode('utilisation')">
-    🟢 Utilisation
-  </button>
-  <button data-mode="gestion" onclick="setAppMode('gestion')">
-    🟡 Gestion
-  </button>
-  <button data-mode="parametres" onclick="setAppMode('parametres')">
-    🔴 Paramètres
-  </button>
-</div>
 
-<div class="mode-banner gestion">
-  Mode Gestion : les boutons d’ajout, de suppression et de conditionnement sont visibles.
-</div>
-<div class="mode-banner parametres">
-  Mode Paramètres : les fonctions de restauration et de remise à zéro sont visibles.
-</div>
 
+
+
+<div class="management-status">
+  Mode Gestion actif : glisse les catégories et les produits pour les réorganiser, ou clique sur un nom pour le renommer.
+</div>
 
 <!-- APP -->
+
 <div id="appTab" class="page active">
   <div class="acid-toolbar">
     <label class="acid-select-label" for="serviceSelect">Service</label>
@@ -602,14 +721,12 @@ body.mode-parametres .mode-banner.parametres{
         Pour ajouter un acide, utilise le bouton « Ajouter un acide » sous le chariot concerné.
         Toutes les modifications sont sauvegardées sur cet appareil.
       </div>
-      <button class="secondary mode-settings" style="width:100%;margin-top:10px" onclick="restoreDefaultAcidStructure()">
-        Restaurer la structure d’origine
-      </button>
+      
     </div>
   </div>
 
   <div id="app"></div>
-  <button class="reset mode-settings" onclick="resetDay()">RESET JOURNÉE</button>
+  <button class="reset" onclick="resetDay()">RESET JOURNÉE</button>
 </div>
 
 <!-- STATS -->
@@ -620,7 +737,7 @@ body.mode-parametres .mode-banner.parametres{
   <h2 style="text-align:center;">Top du jour</h2>
   <div id="topDay"></div>
 
-  <button class="reset mode-settings" onclick="resetStats()">RESET STATS GLOBAL</button>
+  <button class="reset" onclick="resetStats()">RESET STATS GLOBAL</button>
 </div>
 
 <!-- COMMANDES -->
@@ -671,7 +788,7 @@ body.mode-parametres .mode-banner.parametres{
       <div class="hint" style="margin-top:8px">Après l’ajout, utilise « ⚙ Conditionnement » pour renseigner les quantités par boîte, carton ou palette.</div>
     </div>
 
-    <button class="secondary mode-settings" style="width:100%;margin-top:8px" onclick="restoreDeletedReferences()">↩ Restaurer les références supprimées</button>
+    
   </div>
 
   <div id="commandes"></div>
@@ -683,7 +800,7 @@ body.mode-parametres .mode-banner.parametres{
       <button class="primary" onclick="copyCommande()">📋 Copier la commande</button>
       <button class="success" onclick="downloadCommande()">⬇ Télécharger en texte</button>
     </div>
-    <button class="reset mode-settings" onclick="resetCommande()">RESET COMMANDE</button>
+    <button class="reset" onclick="resetCommande()">RESET COMMANDE</button>
   </div>
 </div>
 
@@ -942,16 +1059,51 @@ const baseProducts = [
 
 let customProducts = JSON.parse(localStorage.getItem("customProducts") || "[]");
 let deletedProductCodes = JSON.parse(localStorage.getItem("deletedProductCodes") || "[]");
+let productEdits = JSON.parse(localStorage.getItem("productEdits") || "{}");
+let categoryOrder = JSON.parse(localStorage.getItem("categoryOrder") || "[]");
 let products = [];
 
+function ensureCategoryOrder(productList){
+  const categories=[...new Set(productList.map(product=>product.category))];
+
+  categoryOrder=categoryOrder.filter(category=>categories.includes(category));
+  categories.forEach(category=>{
+    if(!categoryOrder.includes(category)) categoryOrder.push(category);
+  });
+}
+
+function categoryIndex(category){
+  const index=categoryOrder.indexOf(category);
+  return index===-1 ? 9999 : index;
+}
+
 function refreshProducts(){
-  const visibleBase = baseProducts.filter(product => !deletedProductCodes.includes(product.code));
+  const visibleBase = baseProducts
+    .filter(product => !deletedProductCodes.includes(product.code))
+    .map(product => {
+      const edit=productEdits[product.code] || {};
+      return {
+        ...product,
+        ...edit,
+        sourceCode:product.code,
+        isCustom:false
+      };
+    });
+
   const visibleCustom = customProducts
     .filter(product => !deletedProductCodes.includes(product.code))
-    .map(product => ({...product,isCustom:true}));
+    .map(product => ({
+      ...product,
+      sourceCode:product.code,
+      isCustom:true
+    }));
 
-  products = [...visibleBase, ...visibleCustom].sort((a,b)=>
-    a.category.localeCompare(b.category,"fr") || a.name.localeCompare(b.name,"fr")
+  products=[...visibleBase,...visibleCustom];
+  ensureCategoryOrder(products);
+
+  products.sort((a,b)=>
+    categoryIndex(a.category)-categoryIndex(b.category) ||
+    a.name.localeCompare(b.name,"fr")
   );
 }
 
@@ -982,6 +1134,8 @@ function save(){
   localStorage.setItem("recapCollapsedCategories", JSON.stringify(recapCollapsedCategories));
   localStorage.setItem("customProducts", JSON.stringify(customProducts));
   localStorage.setItem("deletedProductCodes", JSON.stringify(deletedProductCodes));
+  localStorage.setItem("productEdits", JSON.stringify(productEdits));
+  localStorage.setItem("categoryOrder", JSON.stringify(categoryOrder));
   localStorage.setItem("acidStructure", JSON.stringify(acidData));
   localStorage.setItem("selectedAcidService", selectedAcidService);
 }
@@ -1365,16 +1519,114 @@ function addReference(){
   showToast("Référence ajoutée.");
 }
 
+
+function toggleReferenceEdit(code){
+  const panel=document.getElementById(`edit_ref_${safeId(code)}`);
+  if(panel) panel.classList.toggle("open");
+}
+
+function migrateProductCode(oldCode,newCode){
+  if(oldCode===newCode) return;
+
+  const maps=[orderValues,packagingOverrides];
+  maps.forEach(map=>{
+    if(Object.prototype.hasOwnProperty.call(map,oldCode)){
+      map[newCode]=map[oldCode];
+      delete map[oldCode];
+    }
+  });
+
+  favorites=favorites.map(code=>code===oldCode?newCode:code);
+  recapHighlights=recapHighlights.map(code=>code===oldCode?newCode:code);
+}
+
+function saveReferenceEdit(currentCode){
+  const product=products.find(item=>item.code===currentCode);
+  if(!product) return;
+
+  const sid=safeId(currentCode);
+  const newName=document.getElementById(`edit_name_${sid}`).value.trim();
+  const newCode=document.getElementById(`edit_code_${sid}`).value.trim();
+  const newCategory=document.getElementById(`edit_category_${sid}`).value.trim();
+
+  if(!newName || !newCode || !newCategory){
+    showToast("Le nom, la référence et la catégorie sont obligatoires.");
+    return;
+  }
+
+  const duplicate=products.some(item=>
+    item.code.toLowerCase()===newCode.toLowerCase() &&
+    item.code!==currentCode
+  );
+  if(duplicate){
+    showToast("Cette référence existe déjà.");
+    return;
+  }
+
+  if(product.isCustom){
+    const index=customProducts.findIndex(item=>item.code===product.sourceCode);
+    if(index!==-1){
+      customProducts[index]={
+        ...customProducts[index],
+        name:newName,
+        code:newCode,
+        category:newCategory
+      };
+    }
+  }else{
+    productEdits[product.sourceCode]={
+      ...(productEdits[product.sourceCode]||{}),
+      name:newName,
+      code:newCode,
+      category:newCategory
+    };
+  }
+
+  migrateProductCode(currentCode,newCode);
+  if(!categoryOrder.includes(newCategory)) categoryOrder.push(newCategory);
+
+  save();
+  refreshProducts();
+  renderOrders();
+  showToast("Référence modifiée.");
+}
+
+function moveCategory(category,direction){
+  ensureCategoryOrder(products);
+  const index=categoryOrder.indexOf(category);
+  const target=index+direction;
+
+  if(index<0 || target<0 || target>=categoryOrder.length) return;
+
+  [categoryOrder[index],categoryOrder[target]]=
+    [categoryOrder[target],categoryOrder[index]];
+
+  save();
+  refreshProducts();
+  renderOrders();
+}
+
+function categoryOptions(selected){
+  const categories=[...new Set([
+    ...categoryOrder,
+    ...products.map(product=>product.category)
+  ])];
+
+  return categories.map(category=>
+    `<option value="${escapeHtml(category)}" ${category===selected?"selected":""}>${escapeHtml(category)}</option>`
+  ).join("");
+}
+
 function deleteReference(code){
-  const product=[...baseProducts,...customProducts].find(item=>item.code===code);
+  const product=products.find(item=>item.code===code);
   if(!product) return;
 
   if(!confirm(`Supprimer la référence ${product.code} — ${product.name} ?`)) return;
 
-  if(product.isCustom || customProducts.some(item=>item.code===code)){
-    customProducts=customProducts.filter(item=>item.code!==code);
-  }else if(!deletedProductCodes.includes(code)){
-    deletedProductCodes.push(code);
+  if(product.isCustom){
+    customProducts=customProducts.filter(item=>item.code!==product.sourceCode);
+  }else if(!deletedProductCodes.includes(product.sourceCode)){
+    deletedProductCodes.push(product.sourceCode);
   }
 
   delete orderValues[code];
@@ -1749,6 +2001,165 @@ function totalLabel(product,total){
   return `${prefix} : ${total} unité${total>1?"s":""}`;
 }
 
+
+function startInlineRename(event,code){
+  if(appMode!=="gestion") return;
+  event.stopPropagation();
+
+  const product=products.find(item=>item.code===code);
+  if(!product) return;
+
+  const newName=prompt("Nouveau nom du produit :",product.name);
+  if(newName===null) return;
+
+  const trimmed=newName.trim();
+  if(!trimmed || trimmed===product.name) return;
+
+  if(product.isCustom){
+    const index=customProducts.findIndex(item=>item.code===product.sourceCode);
+    if(index!==-1) customProducts[index].name=trimmed;
+  }else{
+    productEdits[product.sourceCode]={
+      ...(productEdits[product.sourceCode]||{}),
+      name:trimmed
+    };
+  }
+
+  save();
+  refreshProducts();
+  renderOrders();
+  showToast("Nom modifié.");
+}
+
+function moveProductBefore(draggedCode,targetCode){
+  if(draggedCode===targetCode) return;
+
+  const dragged=products.find(item=>item.code===draggedCode);
+  const target=products.find(item=>item.code===targetCode);
+  if(!dragged || !target || dragged.category!==target.category) return;
+
+  const categoryProducts=products.filter(item=>item.category===dragged.category);
+  const currentOrder=categoryProducts.map(item=>item.code);
+  const from=currentOrder.indexOf(draggedCode);
+  const to=currentOrder.indexOf(targetCode);
+
+  currentOrder.splice(from,1);
+  currentOrder.splice(to,0,draggedCode);
+
+  const allOrder=JSON.parse(localStorage.getItem("productOrder")||"{}");
+  allOrder[dragged.category]=currentOrder;
+  localStorage.setItem("productOrder",JSON.stringify(allOrder));
+
+  refreshProducts();
+  applyProductOrder();
+  renderOrders();
+}
+
+function applyProductOrder(){
+  const allOrder=JSON.parse(localStorage.getItem("productOrder")||"{}");
+
+  products.sort((a,b)=>{
+    const categoryDiff=categoryIndex(a.category)-categoryIndex(b.category);
+    if(categoryDiff!==0) return categoryDiff;
+
+    const order=allOrder[a.category]||[];
+    const ai=order.indexOf(a.code);
+    const bi=order.indexOf(b.code);
+
+    if(ai!==-1 || bi!==-1){
+      if(ai===-1) return 1;
+      if(bi===-1) return -1;
+      return ai-bi;
+    }
+
+    return a.name.localeCompare(b.name,"fr");
+  });
+}
+
+function moveCategoryBefore(draggedCategory,targetCategory){
+  if(draggedCategory===targetCategory) return;
+
+  const from=categoryOrder.indexOf(draggedCategory);
+  const to=categoryOrder.indexOf(targetCategory);
+  if(from<0 || to<0) return;
+
+  categoryOrder.splice(from,1);
+  categoryOrder.splice(to,0,draggedCategory);
+
+  save();
+  refreshProducts();
+  applyProductOrder();
+  renderOrders();
+}
+
+function enableDragAndDrop(){
+  if(appMode!=="gestion") return;
+
+  document.querySelectorAll(".category").forEach(section=>{
+    const category=section.dataset.category;
+    section.draggable=true;
+
+    section.addEventListener("dragstart",event=>{
+      if(event.target.closest(".product")) return;
+      section.classList.add("dragging");
+      event.dataTransfer.setData("text/category",category);
+    });
+
+    section.addEventListener("dragend",()=>section.classList.remove("dragging"));
+
+    section.addEventListener("dragover",event=>{
+      if(event.dataTransfer.types.includes("text/category")){
+        event.preventDefault();
+        section.classList.add("drop-target");
+      }
+    });
+
+    section.addEventListener("dragleave",()=>section.classList.remove("drop-target"));
+
+    section.addEventListener("drop",event=>{
+      section.classList.remove("drop-target");
+      const dragged=event.dataTransfer.getData("text/category");
+      if(dragged){
+        event.preventDefault();
+        moveCategoryBefore(dragged,category);
+      }
+    });
+  });
+
+  document.querySelectorAll(".product").forEach(article=>{
+    const code=article.dataset.code;
+    article.draggable=true;
+
+    article.addEventListener("dragstart",event=>{
+      event.stopPropagation();
+      article.classList.add("dragging");
+      event.dataTransfer.setData("text/product",code);
+    });
+
+    article.addEventListener("dragend",()=>article.classList.remove("dragging"));
+
+    article.addEventListener("dragover",event=>{
+      if(event.dataTransfer.types.includes("text/product")){
+        event.preventDefault();
+        event.stopPropagation();
+        article.classList.add("drop-target");
+      }
+    });
+
+    article.addEventListener("dragleave",()=>article.classList.remove("drop-target"));
+
+    article.addEventListener("drop",event=>{
+      article.classList.remove("drop-target");
+      const dragged=event.dataTransfer.getData("text/product");
+      if(dragged){
+        event.preventDefault();
+        event.stopPropagation();
+        moveProductBefore(dragged,code);
+      }
+    });
+  });
+}
+
 function renderOrders(){
   const search=(document.getElementById("searchCommande")?.value||"")
     .trim().toLowerCase();
@@ -1761,6 +2172,8 @@ function renderOrders(){
     const matchesFavorites=!favoritesOnly || favorites.includes(product.code);
     return matchesSearch && matchesFavorites;
   });
+
+  applyProductOrder();
 
   const container=document.getElementById("commandes");
   container.innerHTML="";
@@ -1776,6 +2189,7 @@ function renderOrders(){
   categories.forEach(category=>{
     const section=document.createElement("section");
     section.className="category";
+    section.dataset.category=category;
 
     const categoryProducts=visible.filter(p=>p.category===category);
     const isCollapsed=Boolean(collapsedCategories[category]);
@@ -1785,6 +2199,7 @@ function renderOrders(){
     header.onclick=()=>toggleCategory(category);
     header.innerHTML=`
       <h2>${isCollapsed?"▶":"▼"} ${escapeHtml(category)}</h2>
+      <span class="drag-handle" onclick="event.stopPropagation()" title="Déplacer la catégorie">☰</span>
       <span class="badge">${categoryProducts.length} produit${categoryProducts.length>1?"s":""}</span>`;
 
     const content=document.createElement("div");
@@ -1800,11 +2215,13 @@ function renderOrders(){
 
       const article=document.createElement("article");
       article.className="product";
+      article.dataset.code=id;
       article.innerHTML=`
         <div class="product-title">
+          <span class="drag-handle" title="Déplacer">☰</span>
           <div>
-            <div class="product-code">${escapeHtml(product.code)}</div>
-            <div class="product-name">${escapeHtml(product.name)}</div>
+            <div class="product-name inline-edit-name" onclick="startInlineRename(event,'${jsEscape(id)}')" title="Cliquer pour renommer en mode Gestion">${escapeHtml(product.name)}</div>
+            <div class="product-code">Réf. ${escapeHtml(product.code)}</div>
             <span class="badge">${escapeHtml(packagingText(packaging))}</span>
             ${incomplete?'<span class="badge">Conditionnement à compléter</span>':""}
           </div>
@@ -1822,9 +2239,34 @@ function renderOrders(){
         </div>
 
         <div class="product-actions">
+          <button class="mode-management" onclick="toggleReferenceEdit('${jsEscape(id)}')">✏ Modifier</button>
           <button class="mode-management" onclick="toggleSettings('${jsEscape(id)}')">⚙ Conditionnement</button>
           <button onclick="clearProductOrder('${jsEscape(id)}')">Effacer</button>
-          <button class="delete-ref mode-management" onclick="deleteReference('${jsEscape(id)}')">🗑 Supprimer la réf.</button>
+          <button class="delete-ref mode-management" onclick="deleteReference('${jsEscape(id)}')">🗑 Supprimer</button>
+        </div>
+
+        <div id="edit_ref_${safeId(id)}" class="reference-edit-panel">
+          <div class="reference-edit-grid">
+            <input id="edit_name_${safeId(id)}" class="full"
+              value="${escapeHtml(product.name)}"
+              placeholder="Nom du produit">
+
+            <input id="edit_code_${safeId(id)}"
+              value="${escapeHtml(product.code)}"
+              placeholder="Référence">
+
+            <input id="edit_category_${safeId(id)}"
+              list="category_list_${safeId(id)}"
+              value="${escapeHtml(product.category)}"
+              placeholder="Catégorie">
+            <datalist id="category_list_${safeId(id)}">
+              ${categoryOptions(product.category)}
+            </datalist>
+
+            <button class="success full" onclick="saveReferenceEdit('${jsEscape(id)}')">
+              Enregistrer les modifications
+            </button>
+          </div>
         </div>
 
         <div id="settings_${safeId(id)}" class="settings">
@@ -1854,6 +2296,7 @@ function renderOrders(){
   });
 
   updateRecap();
+  enableDragAndDrop();
 }
 
 function clearProductOrder(code){
@@ -1989,49 +2432,26 @@ function resetCommande(){
 
 let appMode = "utilisation";
 
-function setAppMode(mode){
-  if(!["utilisation","gestion","parametres"].includes(mode)) return;
-
-  if(mode==="gestion" && appMode!=="gestion"){
+function toggleManagementMode(){
+  if(appMode!=="gestion"){
     const accepted=confirm(
       "Entrer en mode Gestion ?\n\n" +
-      "Dans ce mode, tu peux ajouter, modifier ou supprimer des données."
+      "Tu pourras modifier, déplacer ou supprimer des données."
     );
     if(!accepted) return;
-  }
-
-  if(mode==="parametres" && appMode!=="parametres"){
-    const accepted=confirm(
-      "Entrer dans les Paramètres ?\n\n" +
-      "Les boutons de remise à zéro et de restauration seront visibles."
-    );
-    if(!accepted) return;
-  }
-
-  appMode=mode;
-  document.body.classList.remove("mode-gestion","mode-parametres");
-
-  if(mode==="gestion") document.body.classList.add("mode-gestion");
-  if(mode==="parametres") document.body.classList.add("mode-parametres");
-
-  document.querySelectorAll(".app-mode-bar button").forEach(button=>{
-    button.classList.toggle("active",button.dataset.mode===mode);
-  });
-
-  // Ferme les panneaux techniques lorsqu'on revient à l'utilisation normale.
-  if(mode==="utilisation"){
-    document.querySelectorAll(".settings.open").forEach(el=>el.classList.remove("open"));
+    appMode="gestion";
+    document.body.classList.add("mode-gestion");
+    showToast("Mode Gestion activé.");
+  }else{
+    appMode="utilisation";
+    document.body.classList.remove("mode-gestion");
+    document.querySelectorAll(".settings.open,.reference-edit-panel.open")
+      .forEach(el=>el.classList.remove("open"));
+    showToast("Mode Utilisation activé.");
   }
 
   createAcidApp();
   renderOrders();
-
-  const labels={
-    utilisation:"Mode Utilisation activé.",
-    gestion:"Mode Gestion activé.",
-    parametres:"Mode Paramètres activé."
-  };
-  showToast(labels[mode]);
 }
 
 /* =========================================================
@@ -2091,7 +2511,7 @@ function jsEscape(value){
 createAcidApp();
 updateAcids();
 renderOrders();
-setAppMode("utilisation");
+
 </script>
 
 </body>
